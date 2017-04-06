@@ -3,6 +3,7 @@ package httpwares_testing
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -33,7 +34,10 @@ func PingBackHandler(retCode int) http.HandlerFunc {
 		for k, _ := range req.Header {
 			respJs.Headers[k] = req.Header.Get(k)
 		}
-
+		req.ParseForm()
+		if code := req.Form.Get("code"); code != "" {
+			retCode, _ = strconv.Atoi(code)
+		}
 		resp.Header().Set("Content-Type", "application/json")
 		resp.WriteHeader(retCode)
 		json.NewEncoder(resp).Encode(respJs)

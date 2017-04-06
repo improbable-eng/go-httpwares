@@ -35,7 +35,8 @@ func getTestingCertsPath() string {
 type WaresTestSuite struct {
 	suite.Suite
 
-	ServerMiddleware []httpwares.Middleware
+	ServerMiddleware  []httpwares.Middleware
+	ClientTripperware httpwares.TripperwareChain
 
 	Handler http.Handler
 
@@ -84,15 +85,19 @@ func (s *WaresTestSuite) SetupSuite() {
 // NewClient returns a client that dials the server for *any* address provided. It's up to you to validate that the
 // scheme is right.
 func (s *WaresTestSuite) NewClient() *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			Dial: func(network, addr string) (net.Conn, error) {
-				return net.Dial(network, s.ServerAddr())
-			},
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
+	var transport http.RoundTripper = &http.Transport{
+		Dial: func(network, addr string) (net.Conn, error) {
+			return net.Dial(network, s.ServerAddr())
 		},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	if s.ClientTripperware != nil {
+		transport = s.ClientTripperware.Forge(transport)
+	}
+	return &http.Client{
+		Transport: transport,
 	}
 }
 
