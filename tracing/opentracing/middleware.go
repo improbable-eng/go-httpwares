@@ -30,12 +30,13 @@ func Middleware(opts ...Option) httpwares.Middleware {
 				next.ServeHTTP(resp, req)
 				return
 			}
+			tags := httpwares_ctxtags.Extract(req)
 			newReq, serverSpan := newServerSpanFromInbound(req, o.tracer)
+			hackyInjectOpentracingIdsToTags(serverSpan, tags)
 			newResp := middleware.NewWrapResponseWriter(resp, req.ProtoMajor)
 			next.ServeHTTP(newResp, newReq)
 
-			// Log context information
-			tags := httpwares_ctxtags.Extract(req)
+			// The other middleware could have changed the tags, so only update the tags here.
 			for k, v := range tags.Values() {
 				serverSpan.SetTag(k, v)
 			}
@@ -60,6 +61,7 @@ func newServerSpanFromInbound(req *http.Request, tracer opentracing.Tracer) (*ht
 		ext.RPCServerOption(parentSpanContext),
 		httpTag,
 	)
+
 	ext.HTTPMethod.Set(serverSpan, req.Method)
 	ext.HTTPUrl.Set(serverSpan, req.URL.String())
 	newReq := req.WithContext(opentracing.ContextWithSpan(req.Context(), serverSpan))

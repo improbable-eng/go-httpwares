@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/mwitkow/go-httpwares"
+	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/mwitkow/go-httpwares/testing"
 	"github.com/mwitkow/go-httpwares/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
@@ -31,6 +32,9 @@ type assertingHandler struct {
 
 func (a *assertingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	assert.NotNil(a.T, opentracing.SpanFromContext(req.Context()), "handlers must have the spancontext in their context, otherwise propagation will fail")
+	tags := httpwares_ctxtags.Extract(req)
+	assert.True(a.T, tags.Has("trace.traceid"), "handlers should see traceid in tags")
+	assert.True(a.T, tags.Has("trace.spanid"), "handlers should see traceid in tags")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }
 
@@ -40,6 +44,7 @@ func TestTaggingSuite(t *testing.T) {
 		WaresTestSuite: &httpwares_testing.WaresTestSuite{
 			Handler: &assertingHandler{t},
 			ServerMiddleware: []httpwares.Middleware{
+				httpwares_ctxtags.Middleware(),
 				http_opentracing.Middleware(http_opentracing.WithTracer(mockTracer)),
 			},
 			ClientTripperware: httpwares.TripperwareChain{

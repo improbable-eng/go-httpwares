@@ -5,6 +5,13 @@
 
 ## Usage
 
+```go
+const (
+	TagTraceId = "trace.traceid"
+	TagSpanId  = "trace.spanid"
+)
+```
+
 #### func  DefaultStatusCodeIsError
 
 ```go

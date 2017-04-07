@@ -3,6 +3,10 @@
 set -e
 echo "" > coverage.txt
 
+echo "Building all"
+go install -v ./...
+
+echo "Testing"
 for d in $(go list ./... | grep -v vendor); do
     echo -e "TESTS FOR: for \033[0;35m${d}\033[0m"
     go test -race -v -coverprofile=profile.coverage.out -covermode=atomic $d
