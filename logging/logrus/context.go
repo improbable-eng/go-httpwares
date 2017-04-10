@@ -4,10 +4,11 @@
 package http_logrus
 
 import (
-	"github.com/Sirupsen/logrus"
-	"golang.org/x/net/context"
 	"net/http"
+
+	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares/tags"
+	"golang.org/x/net/context"
 )
 
 type ctxMarker struct{}
@@ -30,7 +31,7 @@ func Extract(req *http.Request) *logrus.Entry {
 // The logger will have fields pre-populated using http_ctxtags.
 //
 // If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
-func ExtractFromContext(ctx context.Context)  *logrus.Entry {
+func ExtractFromContext(ctx context.Context) *logrus.Entry {
 	l, ok := ctx.Value(ctxMarkerKey).(*logrus.Entry)
 	if !ok {
 		return logrus.NewEntry(nullLogger)

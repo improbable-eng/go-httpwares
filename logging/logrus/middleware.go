@@ -13,8 +13,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-// TODO(mwitkow): Cargo-cult tests from https://github.com/mwitkow/go-grpc-middleware/tree/master/logging
-
 var (
 	// SystemField is used in every log statement made through http_logrus. Can be overwritten before any initialization code.
 	SystemField = "http"
@@ -30,8 +28,8 @@ func Middleware(entry *logrus.Entry, opts ...Option) func(http.Handler) http.Han
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, req.WithContext(nCtx))
 			postCallFields := logrus.Fields{
-				"http.status":          wrappedResp.Status(),
-				"http.time_ns":         time.Now().Sub(startTime),
+				"http.status":  wrappedResp.Status(),
+				"http.time_ns": time.Now().Sub(startTime),
 			}
 			level := o.levelFunc(wrappedResp.Status())
 			levelLogf(

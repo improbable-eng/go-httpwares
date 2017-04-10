@@ -14,7 +14,7 @@ var (
 )
 
 type options struct {
-	levelFunc          CodeToLevel
+	levelFunc CodeToLevel
 }
 
 func evaluateOptions(opts []Option) *options {

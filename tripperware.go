@@ -23,3 +23,12 @@ func (chain TripperwareChain) Forge(final http.RoundTripper) http.RoundTripper {
 	}
 	return next
 }
+
+// WrapClient takes an http.Client and wraps its transport in the chain of tripperwares.
+//
+// If default is not set
+func (chain TripperwareChain) WrapClient(parent *http.Client) *http.Client {
+	copy := *parent
+	copy.Transport = chain.Forge(parent.Transport)
+	return &copy
+}
