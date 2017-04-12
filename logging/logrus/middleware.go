@@ -24,7 +24,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) func(http.Handler) http.Han
 		o := evaluateOptions(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := wrapResponse(req, resp)
-			nCtx := newLoggerForCall(req.Context(), entry, req)
+			nCtx := newContextLogger(req.Context(), entry, req)
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, req.WithContext(nCtx))
 			postCallFields := logrus.Fields{
@@ -40,7 +40,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) func(http.Handler) http.Han
 	}
 }
 
-func newLoggerForCall(ctx context.Context, entry *logrus.Entry, r *http.Request) context.Context {
+func newContextLogger(ctx context.Context, entry *logrus.Entry, r *http.Request) context.Context {
 	callLog := entry.WithFields(
 		logrus.Fields{
 			"system":           SystemField,
@@ -71,6 +71,9 @@ func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...i
 	case logrus.FatalLevel:
 		entry.Fatalf(format, args...)
 	case logrus.PanicLevel:
+		entry.Panicf(format, args...)
+	default:
+		// Unexpected logrus value.
 		entry.Panicf(format, args...)
 	}
 }

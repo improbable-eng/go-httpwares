@@ -4,6 +4,8 @@
 package http_logrus
 
 import (
+	"net/http"
+
 	"github.com/Sirupsen/logrus"
 )
 
@@ -40,7 +42,7 @@ func WithLevels(f CodeToLevel) Option {
 
 // DefaultCodeToLevel is the default implementation of gRPC return codes and interceptor log level.
 func DefaultCodeToLevel(httpStatusCode int) logrus.Level {
-	if httpStatusCode < 400 || httpStatusCode == 404 {
+	if httpStatusCode < 400 || httpStatusCode == http.StatusNotFound {
 		return logrus.InfoLevel
 	} else if httpStatusCode < 500 {
 		return logrus.WarnLevel
