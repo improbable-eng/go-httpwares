@@ -1,4 +1,4 @@
-# Go HTTP Wares
+# :stew: Go HTTP Wares 
 
 [![Travis Build](https://travis-ci.org/mwitkow/go-httpwares.svg?branch=master)](https://travis-ci.org/mwitkow/go-httpwares)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mwitkow/go-httpwares)](https://goreportcard.com/report/github.com/mwitkow/go-httpwares)
