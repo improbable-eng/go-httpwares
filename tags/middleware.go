@@ -41,4 +41,9 @@ func defaultRequestTags(t *Tags, req *http.Request) {
 			t.Set("peer.address", addr)
 		}
 	}
+	host := req.URL.Host
+	if host == "" {
+		host = req.Host
+	}
+	t.Set("http.host", host)
 }
