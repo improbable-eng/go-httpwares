@@ -5,6 +5,6 @@ go:
 
 install:
   - go get -t ./...
-  
+
 script:
  - ./test_all.sh
