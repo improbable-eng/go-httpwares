@@ -126,7 +126,7 @@ func (s *LogrusLoggingSuite) TestPing_WithCustomTags() {
 	assert.Contains(s.T(), msgs[0], `"msg": "handler_log"`, "handler's message must contain user message")
 	assert.Contains(s.T(), msgs[1], `"msg": "handled"`, "interceptor message must contain string")
 	assert.Contains(s.T(), msgs[1], `"level": "info"`, "~200 status codes must be logged as info by default.")
-	assert.Contains(s.T(), msgs[1], `"http.time_ns":`, "interceptor log statement should contain execution time")
+	assert.Contains(s.T(), msgs[1], `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
 func (s *LogrusLoggingSuite) TestPingError_WithCustomLevels() {

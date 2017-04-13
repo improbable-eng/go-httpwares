@@ -29,7 +29,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) func(http.Handler) http.Han
 			nextHandler.ServeHTTP(wrappedResp, req.WithContext(nCtx))
 			postCallFields := logrus.Fields{
 				"http.status":  wrappedResp.Status(),
-				"http.time_ns": time.Now().Sub(startTime),
+				"http.time_ms": timeDiffToMilliseconds(startTime),
 			}
 			level := o.levelFunc(wrappedResp.Status())
 			levelLogf(
@@ -76,4 +76,8 @@ func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...i
 		// Unexpected logrus value.
 		entry.Panicf(format, args...)
 	}
+}
+
+func timeDiffToMilliseconds(then time.Time) float32 {
+	return float32(time.Now().Sub(then).Nanoseconds() / 1000 / 1000)
 }
