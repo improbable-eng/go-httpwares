@@ -1,7 +1,7 @@
 // Copyright 2017 Michal Witkowski. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package httpwares_ctxtags
+package http_ctxtags
 
 import (
 	"net/http"

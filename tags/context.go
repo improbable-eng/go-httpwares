@@ -1,7 +1,7 @@
 // Copyright 2017 Michal Witkowski. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package httpwares_ctxtags
+package http_ctxtags
 
 import (
 	"context"
@@ -11,9 +11,11 @@ import (
 type ctxMarker struct{}
 
 var (
-	// ctxMarkerKey is the Context value marker used by *all* logging middleware.
-	// The logging middleware object must interf
-	ctxMarkerKey = &ctxMarker{}
+	// serversideMarker is the Context value marker used by *all* server-side middleware.
+	serversideMarker = &ctxMarker{}
+
+	// clientsideMarker is the Context value marker used by *all* client-side tripperware.
+	clientsideMarker = &ctxMarker{}
 )
 
 // Tags is the struct used for storing request tags between Context calls.
@@ -40,22 +42,42 @@ func (t *Tags) Values() map[string]interface{} {
 	return t.values
 }
 
-// Extracts returns a pre-existing Tags object in the request's Context.
-// If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
-func Extract(req *http.Request) *Tags {
-	return ExtractFromContext(req.Context())
+// ExtractInbound returns a pre-existing Tags object in the request's Context meant for server-side.
+// If the context wasn't set in the Middleware, a no-op Tag storage is returned that will *not* be propagated in context.
+func ExtractInbound(req *http.Request) *Tags {
+	return ExtractInboundFromCtx(req.Context())
 }
 
-// Extracts returns a pre-existing Tags object in the request's Context.
+// ExtractInbounfFromCtx returns a pre-existing Tags object in the request's Context.
 // If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
-func ExtractFromContext(ctx context.Context) *Tags {
-	t, ok := ctx.Value(ctxMarkerKey).(*Tags)
+func ExtractInboundFromCtx(ctx context.Context) *Tags {
+	t, ok := ctx.Value(serversideMarker).(*Tags)
 	if !ok {
 		return &Tags{values: make(map[string]interface{})}
 	}
 	return t
 }
 
-func setInContext(ctx context.Context, tags *Tags) context.Context {
-	return context.WithValue(ctx, ctxMarkerKey, tags)
+func setInboundInContext(ctx context.Context, tags *Tags) context.Context {
+	return context.WithValue(ctx, clientsideMarker, tags)
+}
+
+// ExtractOutbound returns a pre-existing Tags object in the request's Context meant for server-side.
+// If the context wasn't set in the Middleware, a no-op Tag storage is returned that will *not* be propagated in context.
+func ExtractOutbound(req *http.Request) *Tags {
+	return ExtractOutboundFromCtx(req.Context())
+}
+
+// ExtractInbounfFromCtx returns a pre-existing Tags object in the request's Context.
+// If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
+func ExtractOutboundFromCtx(ctx context.Context) *Tags {
+	t, ok := ctx.Value(clientsideMarker).(*Tags)
+	if !ok {
+		return &Tags{values: make(map[string]interface{})}
+	}
+	return t
+}
+
+func setOutboundInContext(ctx context.Context, tags *Tags) context.Context {
+	return context.WithValue(ctx, clientsideMarker, tags)
 }

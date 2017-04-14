@@ -1,7 +1,7 @@
 // Copyright 2017 Michal Witkowski. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package httpwares_ctxtags
+package http_ctxtags
 
 import (
 	"net"
@@ -16,7 +16,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 	o := evaluateOptions(opts)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			t := ExtractFromContext(req.Context()) // will allocate a new one if it didn't exist.
+			t := ExtractInboundFromCtx(req.Context()) // will allocate a new one if it didn't exist.
 			defaultRequestTags(t, req)
 			for _, extractor := range o.tagExtractors {
 				if output := extractor(req); output != nil {
@@ -25,7 +25,10 @@ func Middleware(opts ...Option) httpwares.Middleware {
 					}
 				}
 			}
-			next.ServeHTTP(resp, req.WithContext(setInContext(req.Context(), t)))
+			if !t.Has("http.service") {
+				t.Set("http.service", o.defaultServiceName)
+			}
+			next.ServeHTTP(resp, req.WithContext(setInboundInContext(req.Context(), t)))
 		})
 	}
 }

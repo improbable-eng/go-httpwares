@@ -1,4 +1,4 @@
-package httpwares_ctxtags_test
+package http_ctxtags_test
 
 import (
 	"net/http"
@@ -17,13 +17,19 @@ type assertingHandler struct {
 }
 
 func (a *assertingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	assert.True(a, httpwares_ctxtags.Extract(req).Has("peer.address"), "ctxtags must have peer.address at least")
+	assert.True(a, http_ctxtags.ExtractInbound(req).Has("peer.address"), "ctxtags must have peer.address at least")
+	assert.Equal(a, "someservice", http_ctxtags.ExtractInbound(req).Values()["http.service"], "ctxtags must have peer.address at least")
+
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }
 
 func TestTaggingSuite(t *testing.T) {
 	chiRouter := chi.NewRouter()
-	chiRouter.Use(httpwares_ctxtags.Middleware(httpwares_ctxtags.WithTagExtractor(httpwares_ctxtags.ChiRouteTagExtractor)))
+	chiRouter.Use(
+		http_ctxtags.Middleware(
+			http_ctxtags.WithTagExtractor(http_ctxtags.ChiRouteTagExtractor),
+			http_ctxtags.WithServiceName("someservice"),
+		))
 	chiRouter.Mount("/", &assertingHandler{t})
 	s := &TaggingSuite{
 		WaresTestSuite: &httpwares_testing.WaresTestSuite{

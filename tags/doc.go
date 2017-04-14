@@ -17,4 +17,4 @@ https://github.com/opentracing/specification/blob/master/semantic_conventions.md
 
 */
 
-package httpwares_ctxtags
+package http_ctxtags

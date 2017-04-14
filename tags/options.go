@@ -1,18 +1,20 @@
 // Copyright 2017 Michal Witkowski. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package httpwares_ctxtags
+package http_ctxtags
 
 import "net/http"
 
 var (
 	defaultOptions = &options{
-		tagExtractors: []RequestTagExtractorFunc{},
+		tagExtractors:      []RequestTagExtractorFunc{},
+		defaultServiceName: "unspecified",
 	}
 )
 
 type options struct {
-	tagExtractors []RequestTagExtractorFunc
+	tagExtractors      []RequestTagExtractorFunc
+	defaultServiceName string
 }
 
 func evaluateOptions(opts []Option) *options {
@@ -33,5 +35,15 @@ type RequestTagExtractorFunc func(req *http.Request) map[string]interface{}
 func WithTagExtractor(f RequestTagExtractorFunc) Option {
 	return func(o *options) {
 		o.tagExtractors = append(o.tagExtractors, f)
+	}
+}
+
+// WithServiceName is an option that allows you to track requests to different URL under the same service name.
+//
+// For client side requests, you can track external, and internal service names by using WithServiceName("github").
+// For server side you can track logical groups of http.Handlers into a single service.
+func WithServiceName(serviceName string) Option {
+	return func(o *options) {
+		o.defaultServiceName = serviceName
 	}
 }

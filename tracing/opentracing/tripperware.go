@@ -15,7 +15,7 @@ import (
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-// UnaryClientInterceptor returns a new unary server interceptor for OpenTracing.
+// Tripperware returns a piece of client-side Tripperware that forwards opentracing tokens.
 func Tripperware(opts ...Option) httpwares.Tripperware {
 	o := evaluateOptions(opts)
 	return func(next http.RoundTripper) http.RoundTripper {
