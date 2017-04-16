@@ -78,6 +78,18 @@ func ExtractOutboundFromCtx(ctx context.Context) *Tags {
 	return t
 }
 
-func setOutboundInContext(ctx context.Context, tags *Tags) context.Context {
+func setOutboundInCtx(ctx context.Context, tags *Tags) context.Context {
+	t, ok := ctx.Value(clientsideMarker).(*Tags)
+	if ok && t == tags { // points to same variable, no point setting.
+		return ctx
+	}
 	return context.WithValue(ctx, clientsideMarker, tags)
+}
+
+func setOutboundInRequest(req *http.Request, tags *Tags) *http.Request {
+	t, ok := req.Context().Value(clientsideMarker).(*Tags)
+	if ok && t == tags { // points to same variable, no point setting.
+		return req
+	}
+	return req.WithContext(context.WithValue(req.Context(), clientsideMarker, tags))
 }

@@ -6,9 +6,11 @@ package http_ctxtags
 import "net/http"
 
 var (
+	DefaultServiceName = "unspecified"
+
 	defaultOptions = &options{
 		tagExtractors:      []RequestTagExtractorFunc{},
-		defaultServiceName: "unspecified",
+		defaultServiceName: DefaultServiceName,
 	}
 )
 

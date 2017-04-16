@@ -1,8 +1,9 @@
 package http_ctxtags
 
 import (
-	"github.com/mwitkow/go-httpwares"
 	"net/http"
+
+	"github.com/mwitkow/go-httpwares"
 )
 
 // Tripperware returns a new client-side ware that injects tags about the request.
@@ -20,11 +21,11 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 
 				}
 			}
-			if !t.Has("http.service") {
-				t.Set("http.service", o.defaultServiceName)
+			if !t.Has(TagForCallService) {
+				t.Set(TagForCallService, o.defaultServiceName)
 			}
 
-			newReq := req.WithContext(setOutboundInContext(req.Context(), t))
+			newReq := setOutboundInRequest(req, t)
 			return next.RoundTrip(newReq)
 		})
 	}

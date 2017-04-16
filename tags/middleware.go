@@ -25,8 +25,8 @@ func Middleware(opts ...Option) httpwares.Middleware {
 					}
 				}
 			}
-			if !t.Has("http.service") {
-				t.Set("http.service", o.defaultServiceName)
+			if !t.Has(TagForHandlerService) {
+				t.Set(TagForHandlerService, o.defaultServiceName)
 			}
 			next.ServeHTTP(resp, req.WithContext(setInboundInContext(req.Context(), t)))
 		})

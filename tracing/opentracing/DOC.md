@@ -30,7 +30,8 @@ Middleware returns a http.Handler middleware values for request tags.
 ```go
 func Tripperware(opts ...Option) httpwares.Tripperware
 ```
-UnaryClientInterceptor returns a new unary server interceptor for OpenTracing.
+Tripperware returns a piece of client-side Tripperware that forwards opentracing
+tokens.
 
 #### type FilterFunc
 
