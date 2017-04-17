@@ -26,14 +26,14 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			}
 			newReq, clientSpan := newClientSpanFromRequest(req, o.tracer)
 			resp, err := next.RoundTrip(newReq)
-			// record the trace.
-			ext.HTTPStatusCode.Set(clientSpan, uint16(resp.StatusCode))
 			if err != nil {
 				ext.Error.Set(clientSpan, true)
 				clientSpan.LogFields(otlog.String("event", "error"), otlog.String("message", err.Error()))
-			}
-			if o.statusCodeErrorFunc(resp.StatusCode) {
-				ext.Error.Set(clientSpan, true)
+			} else {
+				ext.HTTPStatusCode.Set(clientSpan, uint16(resp.StatusCode))
+				if o.statusCodeErrorFunc(resp.StatusCode) {
+					ext.Error.Set(clientSpan, true)
+				}
 			}
 			clientSpan.Finish()
 			return resp, err
