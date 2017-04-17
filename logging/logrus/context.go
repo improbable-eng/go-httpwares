@@ -37,7 +37,7 @@ func ExtractFromContext(ctx context.Context) *logrus.Entry {
 		return logrus.NewEntry(nullLogger)
 	}
 	// Add grpc_ctxtags tags metadata until now.
-	return l.WithFields(logrus.Fields(httpwares_ctxtags.ExtractFromContext(ctx).Values()))
+	return l.WithFields(logrus.Fields(http_ctxtags.ExtractInboundFromCtx(ctx).Values()))
 }
 
 func toContext(ctx context.Context, entry *logrus.Entry) context.Context {

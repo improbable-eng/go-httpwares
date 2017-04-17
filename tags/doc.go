@@ -2,19 +2,32 @@
 // See LICENSE for licensing terms.
 
 /*
-`wares_tags` adds a Tag object to the context that can be used by other server middleware  to add context about a request.
+`http_ctxtags` adds a Tag object to the request's context that identifies it for other wares.
 
 Request Context Tags
 
 Tags describe information about the request, and can be set and used by other middleware. Tags are used for logging
-and tracing of requests.
+and tracing of requests. This extends to both client-side (Tripperware) and server-side (Middleware) libraries.
 
-If a user doesn't use the interceptors that initialize the `Tags` object, all operations following from an `Extract(ctx)`
-will be no-ops. This is to ensure that code doesn't panic if the interceptors weren't used.
+Service and Method Tags
+
+`http_ctxtags` introduces a concept of services and methods to both server-side and client-side calls. This is to
+make it easy to extract semantic meaning of otherwise opaque RESTful URLs, and make it easy to count such requests.
+
+For client-side calls, the service is either an external name (e.g. "github", "aws") or internal name (e.g. "authserver").
+A method represents the logical operation (e.g. "place_payment").
+
+For server-side calls, the service is a grouping of http.Handlers, and a method is a logical name for an http.Handler.
+
+See `TagFor*` consts below.
+
+Custom Tags
+
+You can provide a `WithTagExtractor` function that will populate tags server-side and client-side. These will be exposed
+to all the monitoring and logging middleware, and added to traces by default.
 
 Tags fields are typed, and shallow and should follow the OpenTracing semantics convention:
 https://github.com/opentracing/specification/blob/master/semantic_conventions.md
-
 */
 
-package httpwares_ctxtags
+package http_ctxtags

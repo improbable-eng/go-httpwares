@@ -10,12 +10,13 @@ import (
 	"log"
 
 	"github.com/mwitkow/go-httpwares"
+	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	otlog "github.com/opentracing/opentracing-go/log"
 )
 
-// UnaryClientInterceptor returns a new unary server interceptor for OpenTracing.
+// Tripperware returns a piece of client-side Tripperware that forwards opentracing tokens.
 func Tripperware(opts ...Option) httpwares.Tripperware {
 	o := evaluateOptions(opts)
 	return func(next http.RoundTripper) http.RoundTripper {
@@ -63,6 +64,13 @@ func newClientSpanFromRequest(req *http.Request, tracer opentracing.Tracer) (*ht
 }
 
 func operationNameFromUrl(req *http.Request) string {
-	// String() doesn't work as it would serialize queries etc.
+	if tags := http_ctxtags.ExtractOutbound(req); tags.Has(http_ctxtags.TagForCallService) {
+		vals := tags.Values()
+		method := "unknown"
+		if val, ok := vals[http_ctxtags.TagForCallMethod].(string); ok {
+			method = val
+		}
+		return fmt.Sprintf("%v:%s", vals[http_ctxtags.TagForCallService], method)
+	}
 	return fmt.Sprintf("%s%s", req.URL.Host, req.URL.Path)
 }

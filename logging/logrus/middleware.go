@@ -79,5 +79,5 @@ func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...i
 }
 
 func timeDiffToMilliseconds(then time.Time) float32 {
-	return float32(time.Now().Sub(then).Nanoseconds() / 1000) / 1000.0
+	return float32(time.Now().Sub(then).Nanoseconds()/1000) / 1000.0
 }

@@ -32,7 +32,7 @@ type assertingHandler struct {
 
 func (a *assertingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	assert.NotNil(a.T, opentracing.SpanFromContext(req.Context()), "handlers must have the spancontext in their context, otherwise propagation will fail")
-	tags := httpwares_ctxtags.Extract(req)
+	tags := http_ctxtags.ExtractInbound(req)
 	assert.True(a.T, tags.Has("trace.traceid"), "handlers should see traceid in tags")
 	assert.True(a.T, tags.Has("trace.spanid"), "handlers should see traceid in tags")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
@@ -42,12 +42,13 @@ func TestTaggingSuite(t *testing.T) {
 	mockTracer := mocktracer.New()
 	s := &OpentracingSuite{
 		WaresTestSuite: &httpwares_testing.WaresTestSuite{
-			Handler: &assertingHandler{t},
+			Handler: http_ctxtags.TagHandler("assert_service", "assert_method", &assertingHandler{t}),
 			ServerMiddleware: []httpwares.Middleware{
-				httpwares_ctxtags.Middleware(),
+				http_ctxtags.Middleware(),
 				http_opentracing.Middleware(http_opentracing.WithTracer(mockTracer)),
 			},
 			ClientTripperware: httpwares.TripperwareChain{
+				http_ctxtags.Tripperware(),
 				http_opentracing.Tripperware(http_opentracing.WithTracer(mockTracer)),
 			},
 		},
@@ -109,11 +110,11 @@ func (s *OpentracingSuite) TestPropagatesTraces() {
 	client := s.NewClient()
 	ctx := s.createContextFromFakeHttpRequestParent(s.SimpleCtx())
 	req, _ := http.NewRequest("GET", "https://something.local/someurl", nil)
-	req = req.WithContext(ctx)
+	req = http_ctxtags.TagRequest(req.WithContext(ctx), "assert_service", "assert_method")
 	resp, err := client.Do(req)
 	require.NoError(s.T(), err, "call shouldn't fail")
 	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should have the same type")
-	clientSpan, serverSpan := s.assertTracesCreated("something.local/someurl")
+	clientSpan, serverSpan := s.assertTracesCreated("assert_service:assert_method")
 	assert.Equal(s.T(), "GET", clientSpan.Tag("http.method"), "client span needs the correct method marking")
 	assert.Equal(s.T(), "GET", serverSpan.Tag("http.method"), "server span needs the correct method marking")
 	assert.EqualValues(s.T(), httpwares_testing.DefaultPingBackStatusCode, clientSpan.Tag("http.status_code"), "client span needs the correct status code marking")
@@ -124,11 +125,11 @@ func (s *OpentracingSuite) TestPropagatesErrors() {
 	client := s.NewClient()
 	ctx := s.createContextFromFakeHttpRequestParent(s.SimpleCtx())
 	req, _ := http.NewRequest("POST", "https://something.local/someurl?code=501", nil)
-	req = req.WithContext(ctx)
+	req = http_ctxtags.TagRequest(req.WithContext(ctx), "assert_service", "assert_method")
 	resp, err := client.Do(req)
 	require.NoError(s.T(), err, "call shouldn't fail")
 	require.Equal(s.T(), 501, resp.StatusCode, "response should have the same type")
-	clientSpan, serverSpan := s.assertTracesCreated("something.local/someurl")
+	clientSpan, serverSpan := s.assertTracesCreated("assert_service:assert_method")
 	assert.Equal(s.T(), "POST", clientSpan.Tag("http.method"), "client span needs the correct method marking")
 	assert.Equal(s.T(), "POST", serverSpan.Tag("http.method"), "server span needs the correct method marking")
 	assert.EqualValues(s.T(), 501, clientSpan.Tag("http.status_code"), "client span needs the correct status code marking")

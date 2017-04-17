@@ -13,7 +13,6 @@ import (
 	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/pressly/chi"
 	"github.com/pressly/chi/middleware"
 )
 
@@ -30,7 +29,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 				next.ServeHTTP(resp, req)
 				return
 			}
-			tags := httpwares_ctxtags.Extract(req)
+			tags := http_ctxtags.ExtractInbound(req)
 			newReq, serverSpan := newServerSpanFromInbound(req, o.tracer)
 			hackyInjectOpentracingIdsToTags(serverSpan, tags)
 			newResp := middleware.NewWrapResponseWriter(resp, req.ProtoMajor)
@@ -40,6 +39,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 			for k, v := range tags.Values() {
 				serverSpan.SetTag(k, v)
 			}
+			serverSpan.SetOperationName(operationNameFromReqHandler(req)) // replace the placeholder
 			ext.HTTPStatusCode.Set(serverSpan, uint16(newResp.Status()))
 			if o.statusCodeErrorFunc(newResp.Status()) {
 				ext.Error.Set(serverSpan, true)
@@ -56,7 +56,7 @@ func newServerSpanFromInbound(req *http.Request, tracer opentracing.Tracer) (*ht
 	}
 
 	serverSpan := tracer.StartSpan(
-		operationNameFromReqHandler(req),
+		"placeholder_name",
 		// this is magical, it attaches the new span to the parent parentSpanContext, and creates an unparented one if empty.
 		ext.RPCServerOption(parentSpanContext),
 		httpTag,
@@ -69,8 +69,13 @@ func newServerSpanFromInbound(req *http.Request, tracer opentracing.Tracer) (*ht
 }
 
 func operationNameFromReqHandler(req *http.Request) string {
-	if routeCtx, ok := req.Context().Value(chi.RouteCtxKey).(*chi.Context); ok {
-		return routeCtx.RoutePattern
+	if tags := http_ctxtags.ExtractInbound(req); tags.Has(http_ctxtags.TagForHandlerService) {
+		vals := tags.Values()
+		method := "unknown"
+		if val, ok := vals[http_ctxtags.TagForHandlerMethod].(string); ok {
+			method = val
+		}
+		return fmt.Sprintf("%v:%s", vals[http_ctxtags.TagForHandlerService], method)
 	}
 	if req.URL.Host != "" {
 		return fmt.Sprintf("%s%s", req.URL.Host, req.URL.Path)
