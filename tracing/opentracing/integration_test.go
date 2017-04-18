@@ -135,3 +135,13 @@ func (s *OpentracingSuite) TestPropagatesErrors() {
 	assert.EqualValues(s.T(), 501, clientSpan.Tag("http.status_code"), "client span needs the correct status code marking")
 	assert.EqualValues(s.T(), 501, serverSpan.Tag("http.status_code"), "server span needs the correct status code marking")
 }
+
+func (s *OpentracingSuite) TestTripperwareHandlesErrors() {
+	client := s.WaresTestSuite.ClientTripperware.WrapClient(http.DefaultClient)
+	ctx := s.createContextFromFakeHttpRequestParent(s.SimpleCtx())
+	req, _ := http.NewRequest("POST", "https://whatever.doesntexist/someurl?code=501", nil)
+	req = http_ctxtags.TagRequest(req.WithContext(ctx), "assert_service", "assert_method")
+	_, err := client.Do(req)
+	require.Error(s.T(), err, "call should fail with resolution error")
+	assert.Len(s.T(), s.mockTracer.FinishedSpans(), 2, "we should record two spans: fake one and client one")
+}
