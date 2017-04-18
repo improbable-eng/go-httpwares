@@ -12,16 +12,19 @@ import (
 	"golang.org/x/net/trace"
 )
 
-// Tripperware returns a piece of client-side Tripperware that puts requests on a status page.
+// Tripperware returns a piece of client-side Tripperware that puts requests on the `/debug/requests` page.
+//
+// The data logged will be: request headers, request ctxtags, response headers and response length.
 func Tripperware(opts ...Option) httpwares.Tripperware {
 	o := evaluateOptions(opts)
 	return func(next http.RoundTripper) http.RoundTripper {
 		return httpwares.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			if o.filterOutFunc != nil && !o.filterOutFunc(req) {
+			if o.filterFunc != nil && !o.filterFunc(req) {
 				return next.RoundTrip(req)
 
 			}
 			tr := trace.New(operationNameFromUrl(req), req.URL.String())
+			defer tr.Finish()
 			tr.LazyPrintf("%v %v HTTP/%d.%d", req.Method, req.URL, req.ProtoMajor, req.ProtoMinor)
 			tr.LazyPrintf("Host: %v", hostFromReq(req))
 			for k, _ := range req.Header {
@@ -45,7 +48,6 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 					tr.SetError()
 				}
 			}
-			tr.Finish()
 			return resp, err
 		})
 	}

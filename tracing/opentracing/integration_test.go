@@ -142,6 +142,6 @@ func (s *OpentracingSuite) TestTripperwareHandlesErrors() {
 	req, _ := http.NewRequest("POST", "https://whatever.doesntexist/someurl?code=501", nil)
 	req = http_ctxtags.TagRequest(req.WithContext(ctx), "assert_service", "assert_method")
 	_, err := client.Do(req)
-	require.Error(s.T(), err, "call shouldn't fail")
+	require.Error(s.T(), err, "call should fail with resolution error")
 	assert.Len(s.T(), s.mockTracer.FinishedSpans(), 2, "we should record two spans: fake one and client one")
 }

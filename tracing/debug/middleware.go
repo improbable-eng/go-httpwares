@@ -15,15 +15,18 @@ import (
 )
 
 // Middleware returns a http.Handler middleware that writes inbound requests to /debug/request.
+//
+// The data logged will be: request headers, request ctxtags, response headers and response length.
 func Middleware(opts ...Option) httpwares.Middleware {
 	o := evaluateOptions(opts)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			if o.filterOutFunc != nil && !o.filterOutFunc(req) {
+			if o.filterFunc != nil && !o.filterFunc(req) {
 				next.ServeHTTP(resp, req)
 				return
 			}
 			tr := trace.New(operationNameFromReqHandler(req), req.RequestURI)
+			defer tr.Finish()
 			tr.LazyPrintf("%v %v HTTP/%d.%d", req.Method, req.RequestURI, req.ProtoMajor, req.ProtoMinor)
 			tr.LazyPrintf("Host: %v", hostFromReq(req))
 			for k, _ := range req.Header {
@@ -43,7 +46,6 @@ func Middleware(opts ...Option) httpwares.Middleware {
 			if o.statusCodeErrorFunc(newResp.Status()) {
 				tr.SetError()
 			}
-			tr.Finish()
 		})
 	}
 }
