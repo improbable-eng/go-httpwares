@@ -22,7 +22,12 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 				}
 			}
 			if !t.Has(TagForCallService) {
-				t.Set(TagForCallService, o.defaultServiceName)
+				if svc := o.serviceName; svc != "" {
+					t.Set(TagForCallService, svc)
+				} else {
+					svc := o.serviceNameDetectorFunc(req)
+					t.Set(TagForCallService, svc)
+				}
 			}
 
 			newReq := setOutboundInRequest(req, t)

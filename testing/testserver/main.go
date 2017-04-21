@@ -33,7 +33,7 @@ func main() {
 	opentracing.SetGlobalTracer(mocktracer.New())
 
 	googleClient := httpwares.TripperwareChain{
-		http_ctxtags.Tripperware(http_ctxtags.WithServiceName("google")),
+		http_ctxtags.Tripperware(),
 		http_opentracing.Tripperware(),
 		http_debug.Tripperware(),
 	}.WrapClient(http.DefaultClient)
@@ -43,12 +43,12 @@ func main() {
 		resp.Header().Add("Content-Type", "application/json")
 		resp.Write([]byte(`{"queried_google": true}`))
 		callCtx := conntrack.DialNameToContext(req.Context(), "google")
-		_, err := ctxhttp.Get(callCtx, googleClient, "https://www.google.comx")
+		_, err := ctxhttp.Get(callCtx, googleClient, "https://www.google.com")
 		logInstance.Printf("Google reached with err: %v", err)
 	}
 
 	chainedHandler := chi.Chain(
-		http_ctxtags.Middleware(http_ctxtags.WithServiceName("my_service")),
+		http_ctxtags.Middleware("google_ping_service"),
 		http_opentracing.Middleware(),
 		http_debug.Middleware(),
 		http_logrus.Middleware(logInstance),

@@ -72,7 +72,7 @@ func TestLogrusLoggingSuite(t *testing.T) {
 		WaresTestSuite: &httpwares_testing.WaresTestSuite{
 			Handler: &loggingHandler{t},
 			ServerMiddleware: []httpwares.Middleware{
-				http_ctxtags.Middleware(),
+				http_ctxtags.Middleware("my_service"),
 				http_logrus.Middleware(logrus.NewEntry(log), http_logrus.WithLevels(customCodeToLevel)),
 			},
 		},
