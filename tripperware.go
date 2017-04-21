@@ -29,6 +29,10 @@ func (chain TripperwareChain) Forge(final http.RoundTripper) http.RoundTripper {
 // If default is not set
 func (chain TripperwareChain) WrapClient(parent *http.Client) *http.Client {
 	copy := *parent
-	copy.Transport = chain.Forge(parent.Transport)
+	finalTransport := parent.Transport
+	if finalTransport == nil { // in case of DefaultTransport
+		finalTransport = http.DefaultTransport
+	}
+	copy.Transport = chain.Forge(finalTransport)
 	return &copy
 }

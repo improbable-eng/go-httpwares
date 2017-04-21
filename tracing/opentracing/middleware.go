@@ -13,6 +13,7 @@ import (
 	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/pressly/chi"
 	"github.com/pressly/chi/middleware"
 )
 
@@ -39,7 +40,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 			for k, v := range tags.Values() {
 				serverSpan.SetTag(k, v)
 			}
-			serverSpan.SetOperationName(operationNameFromReqHandler(req)) // replace the placeholder
+			serverSpan.SetOperationName(operationNameFromReqHandler(req))
 			ext.HTTPStatusCode.Set(serverSpan, uint16(newResp.Status()))
 			if o.statusCodeErrorFunc(newResp.Status()) {
 				ext.Error.Set(serverSpan, true)
