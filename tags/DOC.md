@@ -9,8 +9,6 @@
 const (
 	// TagForCallService is a string naming the ctxtag identifying a "service" grouping for an http.Request (e.g. "github")
 	TagForCallService = "http.call.service"
-	// TagForCallMethod is a string naming the ctxtag identifying a "method" in a "service" for an http.Request (e.g. "login")
-	TagForCallMethod = "http.call.method"
 
 	// TagForHandlerGroup is a string naming the ctxtag identifying a name of the grouping of http.Handlers (e.g. auth).
 	TagForHandlerGroup = "http.handler.group"
@@ -32,7 +30,7 @@ func ChiRouteTagExtractor(req *http.Request) map[string]interface{}
 ```
 ChiRouteTagExtractor extracts chi router information and puts them into tags.
 
-By default it will treat the route pattern as a method name.
+By default it will treat the route pattern as the handler name.
 
 #### func  DefaultServiceNameDetector
 
