@@ -11,11 +11,11 @@ import (
 
 // ChiRouteTagExtractor extracts chi router information and puts them into tags.
 //
-// By default it will treat the route pattern as a method name.
+// By default it will treat the route pattern as the handler name.
 func ChiRouteTagExtractor(req *http.Request) map[string]interface{} {
 	if routeCtx, ok := req.Context().Value(chi.RouteCtxKey).(*chi.Context); ok {
 		val := map[string]interface{}{
-			TagForHandlerMethod: routeCtx.RoutePattern,
+			TagForHandlerName: routeCtx.RoutePattern,
 		}
 		for _, param := range routeCtx.URLParams {
 			val["http.request.pathparam."+param.Key] = param.Value

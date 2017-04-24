@@ -66,11 +66,7 @@ func newClientSpanFromRequest(req *http.Request, tracer opentracing.Tracer) (*ht
 func operationNameFromUrl(req *http.Request) string {
 	if tags := http_ctxtags.ExtractOutbound(req); tags.Has(http_ctxtags.TagForCallService) {
 		vals := tags.Values()
-		method := "unknown"
-		if val, ok := vals[http_ctxtags.TagForCallMethod].(string); ok {
-			method = val
-		}
-		return fmt.Sprintf("%v:%s", vals[http_ctxtags.TagForCallService], method)
+		return fmt.Sprintf("%v:%s", vals[http_ctxtags.TagForCallService], req.Method)
 	}
 	return fmt.Sprintf("%s%s", req.URL.Host, req.URL.Path)
 }

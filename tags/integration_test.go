@@ -21,9 +21,9 @@ type assertingHandler struct {
 
 func (a *assertingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	assert.True(a, http_ctxtags.ExtractInbound(req).Has("peer.address"), "ctxtags must have peer.address at least")
-	assert.Equal(a, a.serviceName, http_ctxtags.ExtractInbound(req).Values()["http.handler.service"], "ctxtags must have the service name")
+	assert.Equal(a, a.serviceName, http_ctxtags.ExtractInbound(req).Values()["http.handler.group"], "ctxtags must have the service name")
 	if a.methodName != "" {
-		assert.Equal(a, a.methodName, http_ctxtags.ExtractInbound(req).Values()["http.handler.method"], "ctxtags must have the method name set")
+		assert.Equal(a, a.methodName, http_ctxtags.ExtractInbound(req).Values()["http.handler.name"], "ctxtags must have the method name set")
 	}
 
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
@@ -33,13 +33,15 @@ func TestTaggingSuite(t *testing.T) {
 	chiRouter := chi.NewRouter()
 	chiRouter.Use(
 		http_ctxtags.Middleware(
+			"someservice",
 			http_ctxtags.WithTagExtractor(http_ctxtags.ChiRouteTagExtractor),
-			http_ctxtags.WithServiceName("someservice"),
 		))
 	chiRouter.Mount("/", &assertingHandler{T: t, serviceName: "someservice"})
-	// This route will check whether the TagHandler passes the right metadata.
-	chiRouter.Mount("/myservice/mymethod",
-		http_ctxtags.TagHandler("MyService", "MyMethod", &assertingHandler{
+	// This route will check whether the HandlerName passes the right metadata.
+	chiMyService := chi.NewRouter()
+	chiMyService.Use(append(chiRouter.Middlewares(), http_ctxtags.Middleware("MyService"))...)
+	chiMyService.Handle("/myservice/mymethod",
+		http_ctxtags.HandlerName("MyMethod")(&assertingHandler{
 			T: t, serviceName: "MyService", methodName: "MyMethod"}))
 
 	s := &TaggingSuite{
@@ -73,14 +75,13 @@ func (s *TaggingSuite) TestDefaultTagsAreSet() {
 }
 
 func (s *TaggingSuite) TestCustomTagsAreBeingUsed() {
-	client := s.NewClient()
+	customTrippers := httpwares.TripperwareChain{http_ctxtags.Tripperware(http_ctxtags.WithServiceName("MyServiceCapitalised"))}
+	client := customTrippers.WrapClient(s.NewClient())
 	req, _ := http.NewRequest("GET", "https://something.local/myservice/mymethod", nil)
-	req = http_ctxtags.TagRequest(req, "MyService_call", "MyMethod_call")
 	resp, err := client.Do(req)
 	require.NoError(s.T(), err, "call shouldn't fail")
 	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should have the same type")
 	requestTags := http_ctxtags.ExtractOutbound(resp.Request)
 	assert.NotEmpty(s.T(), requestTags, "request leaving client has tags from client tripperware")
-	assert.Equal(s.T(), "MyService_call", requestTags.Values()["http.call.service"], "request should have serviceName updated by TagRequest")
-	assert.Equal(s.T(), "MyMethod_call", requestTags.Values()["http.call.method"], "request should have methodName updated by TagRequest")
+	assert.Equal(s.T(), "MyServiceCapitalised", requestTags.Values()["http.call.service"], "request should have serviceName updated by TagRequest")
 }

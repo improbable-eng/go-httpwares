@@ -51,13 +51,13 @@ func Middleware(opts ...Option) httpwares.Middleware {
 }
 
 func operationNameFromReqHandler(req *http.Request) string {
-	if tags := http_ctxtags.ExtractInbound(req); tags.Has(http_ctxtags.TagForHandlerService) {
+	if tags := http_ctxtags.ExtractInbound(req); tags.Has(http_ctxtags.TagForHandlerGroup) {
 		vals := tags.Values()
 		method := "unknown"
-		if val, ok := vals[http_ctxtags.TagForHandlerMethod].(string); ok {
+		if val, ok := vals[http_ctxtags.TagForHandlerName].(string); ok {
 			method = val
 		}
-		return fmt.Sprintf("http.Recv.%v.%s", vals[http_ctxtags.TagForHandlerService], method)
+		return fmt.Sprintf("http.Recv.%v.%s", vals[http_ctxtags.TagForHandlerGroup], method)
 	}
 	return fmt.Sprintf("http.Recv.%s", req.URL.Path)
 }

@@ -9,13 +9,11 @@
 const (
 	// TagForCallService is a string naming the ctxtag identifying a "service" grouping for an http.Request (e.g. "github")
 	TagForCallService = "http.call.service"
-	// TagForCallMethod is a string naming the ctxtag identifying a "method" in a "service" for an http.Request (e.g. "login")
-	TagForCallMethod = "http.call.method"
 
-	// TagForHandlerService is a string naming the ctxtag identifying a "service" grouping of http.Handlers (e.g. auth).
-	TagForHandlerService = "http.handler.service"
-	// TagForHandlerMethod is a string naming the ctxtag identifying a logical "method" of the http.Handler (e.g. exchange_token).
-	TagForHandlerMethod = "http.handler.method"
+	// TagForHandlerGroup is a string naming the ctxtag identifying a name of the grouping of http.Handlers (e.g. auth).
+	TagForHandlerGroup = "http.handler.group"
+	// TagForHandlerName is a string naming the ctxtag identifying a logical name for the http.Handler (e.g. exchange_token).
+	TagForHandlerName = "http.handler.name"
 )
 ```
 
@@ -32,46 +30,34 @@ func ChiRouteTagExtractor(req *http.Request) map[string]interface{}
 ```
 ChiRouteTagExtractor extracts chi router information and puts them into tags.
 
-By default it will treat the route pattern as a method name.
+By default it will treat the route pattern as the handler name.
 
-#### func  Middleware
-
-```go
-func Middleware(opts ...Option) httpwares.Middleware
-```
-Middleware returns a http.Handler middleware values for request tags.
-
-#### func  TagHandler
+#### func  DefaultServiceNameDetector
 
 ```go
-func TagHandler(serviceName string, methodName string, handler http.Handler) http.Handler
+func DefaultServiceNameDetector(req *http.Request) string
 ```
-TagHandler is a helper wrapper for http.Handler that will tag it with a given
-service name and method name.
+DefaultServiceNameDetector is the default detector of services from URLs.
+
+#### func  HandlerName
+
+```go
+func HandlerName(handlerName string) httpwares.Middleware
+```
+HandlerName is a piece of middleware that is meant to be used right around an
+htpt.Handler that will tag it with a given service name and method name.
 
 This tag will be used for tracing, logging and monitoring purposes. This *needs*
 to be set in a chain of Middleware that has `http_ctxtags.Middleware` before it.
 
-You can pass in an empty serviceName, in which case it will inherit it from the
-`http_ctxtags.Middleware` configuration.
-
-#### func  TagRequest
+#### func  Middleware
 
 ```go
-func TagRequest(req *http.Request, serviceName string, methodName string) *http.Request
+func Middleware(handlerGroupName string, opts ...Option) httpwares.Middleware
 ```
-TagRequest is a helper that identifies an `http.Request` service name and
-method.
+Middleware returns a http.Handler middleware values for request tags.
 
-This is useful to add "service/method" semantics to your external calls. This
-tag will be used for tracing, logging and monitoring purposes. In order for it
-to work, the invoked `http.Client` needs to have `http_ctxtags.Tripperware` in
-its Roundtripper chain.
-
-You can pass in an empty serviceName, in which case it will inherit it from the
-`http_ctxtags.Tripperware` configuration.
-
-It returns a new Request object.
+handlerGroupName specifies a logical name for a group of handlers.
 
 #### func  Tripperware
 
@@ -92,12 +78,22 @@ type Option func(*options)
 ```go
 func WithServiceName(serviceName string) Option
 ```
-WithServiceName is an option that allows you to track requests to different URL
-under the same service name.
+WithServiceName is an option for client-side wares that explicitly states the
+name of the service called.
 
-For client side requests, you can track external, and internal service names by
-using WithServiceName("github"). For server side you can track logical groups of
-http.Handlers into a single service.
+This option takes precedence over the WithServiceNameDetector values.
+
+For example WithServiceName("github").
+
+#### func  WithServiceNameDetector
+
+```go
+func WithServiceNameDetector(fn serviceNameDetectorFunc) Option
+```
+WithServiceNameDetector allows you to customize the function for automatically
+detecting the service name from URLs.
+
+By default it uses the `DefaultServiceNameDetector`.
 
 #### func  WithTagExtractor
 

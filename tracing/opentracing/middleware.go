@@ -69,13 +69,13 @@ func newServerSpanFromInbound(req *http.Request, tracer opentracing.Tracer) (*ht
 }
 
 func operationNameFromReqHandler(req *http.Request) string {
-	if tags := http_ctxtags.ExtractInbound(req); tags.Has(http_ctxtags.TagForHandlerService) {
+	if tags := http_ctxtags.ExtractInbound(req); tags.Has(http_ctxtags.TagForHandlerGroup) {
 		vals := tags.Values()
 		method := "unknown"
-		if val, ok := vals[http_ctxtags.TagForHandlerMethod].(string); ok {
+		if val, ok := vals[http_ctxtags.TagForHandlerName].(string); ok {
 			method = val
 		}
-		return fmt.Sprintf("%v:%s", vals[http_ctxtags.TagForHandlerService], method)
+		return fmt.Sprintf("%v:%s", vals[http_ctxtags.TagForHandlerGroup], method)
 	}
 	if req.URL.Host != "" {
 		return fmt.Sprintf("%s%s", req.URL.Host, req.URL.Path)
