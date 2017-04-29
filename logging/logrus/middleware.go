@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/mwitkow/go-httpwares"
 	"github.com/pressly/chi/middleware"
 	"golang.org/x/net/context"
 )
@@ -19,9 +20,11 @@ var (
 )
 
 // Middleware is a server-side http ware for logging using logrus.
-func Middleware(entry *logrus.Entry, opts ...Option) func(http.Handler) http.Handler {
+//
+// All handlers will have a Logrus logger in their context, which can be fetched using `http_logrus.Extract`.
+func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 	return func(nextHandler http.Handler) http.Handler {
-		o := evaluateOptions(opts)
+		o := evaluateMiddlewareOpts(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := wrapResponse(req, resp)
 			nCtx := newContextLogger(req.Context(), entry, req)
@@ -44,6 +47,7 @@ func newContextLogger(ctx context.Context, entry *logrus.Entry, r *http.Request)
 	callLog := entry.WithFields(
 		logrus.Fields{
 			"system":           SystemField,
+			"span.kind":        "server",
 			"http.url.path":    r.URL.Path,
 			"http.proto_major": r.ProtoMajor,
 		})
@@ -79,5 +83,9 @@ func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...i
 }
 
 func timeDiffToMilliseconds(then time.Time) float32 {
-	return float32(time.Now().Sub(then).Nanoseconds()/1000) / 1000.0
+	sub := time.Now().Sub(then).Nanoseconds()
+	if sub < 0 {
+		return 0.0
+	}
+	return float32(sub/1000) / 1000.0
 }

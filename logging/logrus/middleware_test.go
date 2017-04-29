@@ -39,21 +39,21 @@ func (a *loggingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) 
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }
 
-type OpentracingSuite struct {
+type LogrusLoggingTestSuite struct {
 	*httpwares_testing.WaresTestSuite
 	mockTracer *mocktracer.MockTracer
 }
 
-func (s *OpentracingSuite) SetupTest() {
+func (s *LogrusLoggingTestSuite) SetupTest() {
 	s.mockTracer.Reset()
 }
 
-func customCodeToLevel(statusCode int) logrus.Level {
+func customMiddlewareCodeToLevel(statusCode int) logrus.Level {
 	if statusCode == testCodeImATeapot {
 		// Make this a special case for tests, and an error.
 		return logrus.ErrorLevel
 	}
-	level := http_logrus.DefaultCodeToLevel(statusCode)
+	level := http_logrus.DefaultMiddlewareCodeToLevel(statusCode)
 	return level
 }
 
@@ -73,7 +73,7 @@ func TestLogrusLoggingSuite(t *testing.T) {
 			Handler: &loggingHandler{t},
 			ServerMiddleware: []httpwares.Middleware{
 				http_ctxtags.Middleware("my_service"),
-				http_logrus.Middleware(logrus.NewEntry(log), http_logrus.WithLevels(customCodeToLevel)),
+				http_logrus.Middleware(logrus.NewEntry(log), http_logrus.WithLevels(customMiddlewareCodeToLevel)),
 			},
 		},
 	}
@@ -117,6 +117,7 @@ func (s *LogrusLoggingSuite) TestPing_WithCustomTags() {
 	msgs := s.getOutputJSONs()
 	require.Len(s.T(), msgs, 2, "two log statements should be logged")
 	for _, m := range msgs {
+		assert.Contains(s.T(), m, `"span.kind": "server"`, "all lines must contain indicator of being a server call")
 		assert.Contains(s.T(), m, `"http.host": "something.local"`, "all lines must contain method name")
 		assert.Contains(s.T(), m, `"http.url.path": "/someurl"`, "all lines must contain method name")
 		assert.Contains(s.T(), m, `"custom_tags.string": "something"`, "all lines must contain `custom_tags.string` set by AddFields")
@@ -138,22 +139,22 @@ func (s *LogrusLoggingSuite) TestPingError_WithCustomLevels() {
 		{
 			code:  http.StatusInternalServerError,
 			level: logrus.ErrorLevel,
-			msg:   "Internal (500) must remap to ErrorLevel in DefaultCodeToLevel",
+			msg:   "Internal (500) must remap to ErrorLevel in DefaultMiddlewareCodeToLevel",
 		},
 		{
 			code:  http.StatusNotFound,
 			level: logrus.InfoLevel,
-			msg:   "NotFound (404) must remap to InfoLevel in DefaultCodeToLevel",
+			msg:   "NotFound (404) must remap to InfoLevel in DefaultMiddlewareCodeToLevel",
 		},
 		{
 			code:  http.StatusBadRequest,
 			level: logrus.WarnLevel,
-			msg:   "BadRequest (400) must remap to WarnLevel in DefaultCodeToLevel",
+			msg:   "BadRequest (400) must remap to WarnLevel in DefaultMiddlewareCodeToLevel",
 		},
 		{
 			code:  http.StatusTeapot,
 			level: logrus.ErrorLevel,
-			msg:   "ImATeapot is overwritten to ErrorLevel with customCodeToLevel override, which probably didn't work",
+			msg:   "ImATeapot is overwritten to ErrorLevel with customMiddlewareCodeToLevel override, which probably didn't work",
 		},
 	} {
 		s.buffer.Reset()
