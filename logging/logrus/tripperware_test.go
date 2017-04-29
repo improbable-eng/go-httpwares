@@ -15,6 +15,8 @@ import (
 
 	"net/http/httputil"
 
+	"mime/multipart"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/logging/logrus"
@@ -61,10 +63,13 @@ func handlerPlainText() http.HandlerFunc {
 func handlerChunked() http.HandlerFunc {
 	return func(resp http.ResponseWriter, req *http.Request) {
 		resp.Header().Set("content-type", "text/plain")
+		resp.Header().Set("Transfer-Encoding", "chunked")
 		resp.WriteHeader(200)
 		chunkedWriter := httputil.NewChunkedWriter(resp)
-		chunkedWriter.Write([]byte("value one"))
-		chunkedWriter.Write([]byte("value two"))
+		for i := 0; i < 100; i++ {
+			chunkedWriter.Write([]byte("value"))
+			resp.(http.Flusher).Flush()
+		}
 		chunkedWriter.Close()
 	}
 }
@@ -127,7 +132,7 @@ func (s *LogrusTripperwareSuite) getOutputJSONs() []string {
 	return ret
 }
 
-func (s *LogrusTripperwareSuite) TestSuccessfulCall() {
+func (s *LogrusTripperwareSuite) xTestSuccessfulCall() {
 	client := s.NewClient() // client always dials localhost.
 	req, _ := http.NewRequest("GET", "https://fakeaddress.fakeaddress.com/someurl", nil)
 	req = req.WithContext(s.SimpleCtx())
@@ -144,7 +149,7 @@ func (s *LogrusTripperwareSuite) TestSuccessfulCall() {
 	assert.Contains(s.T(), m, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) TestSuccessfulCall_WithRemap() {
+func (s *LogrusTripperwareSuite) xTestSuccessfulCall_WithRemap() {
 	for _, tcase := range []struct {
 		code  int
 		level logrus.Level
@@ -187,7 +192,7 @@ func (s *LogrusTripperwareSuite) TestSuccessfulCall_WithRemap() {
 	}
 }
 
-func (s *LogrusTripperwareSuite) TestCapture_SimpleJSONBothWays() {
+func (s *LogrusTripperwareSuite) xTestCapture_SimpleJSONBothWays() {
 	client := s.NewClient() // client always dials localhost.
 	content := new(bytes.Buffer)
 	content.WriteString(`{"somekey": "some_value", "someint": 4}`)
@@ -198,7 +203,7 @@ func (s *LogrusTripperwareSuite) TestCapture_SimpleJSONBothWays() {
 	require.NoError(s.T(), err, "call shouldn't fail")
 	pingBack, err := httpwares_testing.DecodePingBack(resp)
 	require.NoError(s.T(), err, "decoding pingback response must not fail, otherwise we change the behaviour of the client")
-	assert.NotEmpty(s.T(), "application/JSON", pingBack.Headers["content-type"], "the content must be preserved")
+	assert.Equal(s.T(), "application/JSON", pingBack.Headers["Content-Type"], "the content must be preserved")
 
 	msgs := s.getOutputJSONs()
 	require.Len(s.T(), msgs, 3, "three log statements should be logged: captured req, captured resp, and final one")
@@ -216,7 +221,7 @@ func (s *LogrusTripperwareSuite) TestCapture_SimpleJSONBothWays() {
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) TestCapture_PlainTextBothWays() {
+func (s *LogrusTripperwareSuite) xTestCapture_PlainTextBothWays() {
 	client := s.NewClient() // client always dials localhost.
 	content := new(bytes.Buffer)
 	content.WriteString(`Lorem Ipsum, who cares?`)
@@ -238,6 +243,64 @@ func (s *LogrusTripperwareSuite) TestCapture_PlainTextBothWays() {
 	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
 	assert.Contains(s.T(), reqMsg, `"http.request.body_raw": "`, "request capture should log messages as strings")
 	assert.Contains(s.T(), respMsg, `"http.response.body_raw": "`, "response capture should log messages as strings")
+	assert.Contains(s.T(), respMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
+	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
+}
+
+func (s *LogrusTripperwareSuite) xTestCapture_StreamFileUp() {
+	client := s.NewClient() // client always dials localhost.
+	reader, writer := io.Pipe()
+	multipartContent := multipart.NewWriter(writer)
+	go func() {
+		mimeWriter, _ := multipartContent.CreateFormFile("somefield", "filename.txt")
+		for i := 0; i < 10; i++ {
+			mimeWriter.Write([]byte("something\n"))
+		}
+		multipartContent.Close()
+		writer.Close()
+	}()
+	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/json", reader)
+	req.Header.Set("content-type", multipartContent.FormDataContentType())
+	req = req.WithContext(s.SimpleCtx())
+	resp, err := client.Do(req)
+	pingBack, err := httpwares_testing.DecodePingBack(resp)
+	require.NoError(s.T(), err, "decoding pingback response must not fail, otherwise we change the behaviour of the client")
+	assert.Contains(s.T(), pingBack.Headers["Content-Type"], "multipart/form-data", "the content must be preserved")
+
+	require.NoError(s.T(), err, "call shouldn't fail")
+	msgs := s.getOutputJSONs()
+	require.Len(s.T(), msgs, 3, "three log statements should be logged: captured req, captured resp, and final one")
+	for _, m := range msgs {
+		assert.Contains(s.T(), m, `"span.kind": "client"`, "all lines must contain indicator of being a client call")
+		assert.Contains(s.T(), m, `"http.host": "fakeaddress.fakeaddress.com"`, "all lines must contain http.host from http_ctxtags")
+		assert.Contains(s.T(), m, `"http.url.path": "/capture/request/json"`, "all lines must contain method name")
+	}
+	reqMsg, finalMsg := msgs[0], msgs[2]
+	assert.Contains(s.T(), reqMsg, `"level": "info"`, "request captures should be logged as info")
+	assert.Contains(s.T(), reqMsg, `request body capture skipped, missing GetBody method while Body set`, "request should log a helpful error")
+	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
+}
+
+func (s *LogrusTripperwareSuite) TestCapture_ChunkResponse() {
+	client := s.NewClient() // client always dials localhost.
+	content := new(bytes.Buffer)
+	content.WriteString(`{"somekey": "some_value", "someint": 4}`)
+	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/chunked", content)
+	req = req.WithContext(s.SimpleCtx())
+	req.Header.Set("content-type", "application/JSON")
+	_, err := client.Do(req)
+	require.NoError(s.T(), err, "call shouldn't fail")
+	msgs := s.getOutputJSONs()
+	require.Len(s.T(), msgs, 3, "three log statements should be logged: captured req, captured resp, and final one")
+	for _, m := range msgs {
+		assert.Contains(s.T(), m, `"span.kind": "client"`, "all lines must contain indicator of being a client call")
+		assert.Contains(s.T(), m, `"http.host": "fakeaddress.fakeaddress.com"`, "all lines must contain http.host from http_ctxtags")
+		assert.Contains(s.T(), m, `"http.url.path": "/capture/request/chunked"`, "all lines must contain method name")
+	}
+	respMsg, finalMsg := msgs[1], msgs[2]
+	s.T().Log(respMsg)
+	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
+	assert.Contains(s.T(), respMsg, `response body capture skipped, content length negative`, "response capture should log a helpful message")
 	assert.Contains(s.T(), respMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
