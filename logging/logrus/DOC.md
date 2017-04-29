@@ -34,13 +34,21 @@ func AsHttpLogger(logger *logrus.Entry) *log.Logger
 ```
 AsHttpLogger returns the given logrus instance as an HTTP logger.
 
-#### func  DefaultCodeToLevel
+#### func  DefaultMiddlewareCodeToLevel
 
 ```go
-func DefaultCodeToLevel(httpStatusCode int) logrus.Level
+func DefaultMiddlewareCodeToLevel(httpStatusCode int) logrus.Level
 ```
-DefaultCodeToLevel is the default implementation of gRPC return codes and
-interceptor log level.
+DefaultMiddlewareCodeToLevel is the default of a mapper between HTTP server-side
+status codes and logrus log levels.
+
+#### func  DefaultTripperwareCodeToLevel
+
+```go
+func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
+```
+DefaultTripperwareCodeToLevel is the default of a mapper between HTTP
+client-side status codes and logrus log levels.
 
 #### func  Extract
 
@@ -69,9 +77,22 @@ This makes it safe to use regardless.
 #### func  Middleware
 
 ```go
-func Middleware(entry *logrus.Entry, opts ...Option) func(http.Handler) http.Handler
+func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware
 ```
 Middleware is a server-side http ware for logging using logrus.
+
+All handlers will have a Logrus logger in their context, which can be fetched
+using `http_logrus.Extract`.
+
+#### func  Tripperware
+
+```go
+func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware
+```
+Tripperware is a server-side http ware for logging using logrus.
+
+This tripperware *does not* propagate a context-based logger, but act as a
+logger of requests. This includes logging of errors.
 
 #### type CodeToLevel
 
@@ -89,10 +110,20 @@ type Option func(*options)
 ```
 
 
+#### func  WithConnectivityErrorLevel
+
+```go
+func WithConnectivityErrorLevel(level logrus.Level) Option
+```
+WithConnectivityErrorLevel customizes
+
 #### func  WithLevels
 
 ```go
 func WithLevels(f CodeToLevel) Option
 ```
-WithLevels customizes the function for mapping gRPC return codes and interceptor
-log level statements.
+WithLevels customizes the function that maps HTTP client or server side status
+codes to log levels.
+
+By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware,
+and `DefaultTripperwareCodeToLevel` is used for client-side tripperware.

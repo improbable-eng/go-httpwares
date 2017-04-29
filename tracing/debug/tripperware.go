@@ -40,7 +40,8 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 				tr.LazyPrintf("Error on response: %v", err)
 				tr.SetError()
 			} else {
-				tr.LazyPrintf("Response: %d, length: %d", resp.Status, resp.ContentLength)
+				tr.LazyPrintf("HTTP/%d.%d %d %s", resp.ProtoMajor, resp.ProtoMinor, resp.StatusCode, resp.StatusCode)
+				tr.LazyPrintf("Content-Length:  %d", resp.Status, resp.ContentLength)
 				for k, _ := range resp.Header {
 					tr.LazyPrintf("%v: %v", k, resp.Header.Get(k))
 				}
