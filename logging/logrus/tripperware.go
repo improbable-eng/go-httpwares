@@ -7,6 +7,12 @@ import (
 	"net/http"
 	"time"
 
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"io/ioutil"
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/tags"
@@ -21,31 +27,88 @@ func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware {
 		o := evaluateTripperwareOpts(opts)
 		return httpwares.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			startTime := time.Now()
-			resp, err := next.RoundTrip(req)
 			fields := logrus.Fields{
 				"system":        SystemField,
 				"span.kind":     "client",
 				"http.url.path": req.URL.Path,
-				"http.time_ms":  timeDiffToMilliseconds(startTime),
 			}
 			for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
 				fields[k] = v
 			}
-			level := logrus.DebugLevel
-			msg := "request completed"
-			if err != nil {
-				fields[logrus.ErrorKey] = err
-				level = o.levelForConnectivityError
-				msg = "request failed to execute, see err"
-			} else {
-				fields["http.proto_major"] = resp.ProtoMajor
-				fields["http.response_bytes"] = resp.ContentLength
-				fields["http.status"] = resp.StatusCode
-
-				level = o.levelFunc(resp.StatusCode)
+			if o.requestCaptureFunc(req) {
+				if err := captureTripperwareRequestContent(req, entry.WithFields(fields)); err != nil {
+					logError(o, entry.WithFields(fields), err)
+					return nil, err // errors reading GetBody and other problems on client side
+				}
 			}
-			levelLogf(entry.WithFields(fields), level, msg)
-			return resp, err
+			resp, err := next.RoundTrip(req)
+			fields["http.time_ms"] = timeDiffToMilliseconds(startTime)
+			if err != nil {
+				logError(o, entry.WithFields(fields), err)
+				return nil, err
+			}
+			fields["http.proto_major"] = resp.ProtoMajor
+			fields["http.response.length_bytes"] = resp.ContentLength
+			fields["http.status"] = resp.StatusCode
+			if o.responseCaptureFunc(req, resp.StatusCode) {
+				if err := captureTripperwareResponseContent(resp, entry.WithFields(fields)); err != nil {
+					logError(o, entry.WithFields(fields), err)
+					return nil, err
+				}
+			}
+			levelLogf(entry.WithFields(fields), o.levelFunc(resp.StatusCode), "request completed")
+			return resp, nil
 		})
 	}
+}
+
+func logError(o *options, e *logrus.Entry, err error) {
+	levelLogf(e, o.levelForConnectivityError, "request failed to execute, see err")
+}
+
+func captureTripperwareRequestContent(req *http.Request, entry *logrus.Entry) error {
+	// All requests created with http.NewRequest will have a GetBody method set, even if the user created
+	// a body manually.
+	if req.GetBody == nil {
+		if req.Body != nil {
+			entry.Infof("request body capture skipped, missing GetBody method while Body set")
+		}
+		return nil
+	}
+	bodyReader, err := req.GetBody()
+	if err != nil {
+		return err
+	}
+	content, err := ioutil.ReadAll(bodyReader)
+	if err != nil {
+		return err
+	}
+	if strings.HasPrefix(strings.ToLower(req.Header.Get("content-type")), "application/json") {
+		entry.WithField("http.request.body_json", json.RawMessage(content)).Info("request body captured in http.request.body_json field")
+	} else {
+		entry.WithField("http.request.body_raw", base64.StdEncoding.EncodeToString(content)).Info("request body captured in http.request.body_raw field")
+	}
+	return nil
+}
+
+func captureTripperwareResponseContent(resp *http.Response, entry *logrus.Entry) error {
+	if resp.ContentLength <= 0 {
+		// TODO(mwitkow): Deal with response.Uncompressed and gzip encoding (Content Length -1).
+		if resp.ContentLength != 0 {
+			entry.Infof("response body capture skipped, content length negative")
+		}
+		return nil
+	}
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err // this is an error form the response reading, potentially a connection failure
+	}
+	// Make sure we give the Response back its body so the client can read it.
+	resp.Body = ioutil.NopCloser(bytes.NewReader(content))
+	if strings.HasPrefix(strings.ToLower(resp.Header.Get("content-type")), "application/json") {
+		entry.WithField("http.response.body_json", json.RawMessage(content)).Info("request body captured in http.response.body_json field")
+	} else {
+		entry.WithField("http.response.body_raw", base64.StdEncoding.EncodeToString(content)).Info("request body captured in http.response.body_raw field")
+	}
+	return nil
 }

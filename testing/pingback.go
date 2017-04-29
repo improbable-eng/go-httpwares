@@ -43,3 +43,12 @@ func PingBackHandler(retCode int) http.HandlerFunc {
 		json.NewEncoder(resp).Encode(respJs)
 	}
 }
+
+// DecodePingBack returns a parsed PingBackResponse for assertion purposes.
+func DecodePingBack(resp *http.Response) (*PingBackResponse, error) {
+	val := &PingBackResponse{}
+	if err := json.NewDecoder(resp.Body).Decode(val); err != nil {
+		return nil, err
+	}
+	return val, nil
+}
