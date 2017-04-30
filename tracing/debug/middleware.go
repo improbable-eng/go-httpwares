@@ -10,7 +10,6 @@ import (
 
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/tags"
-	"github.com/pressly/chi/middleware"
 	"golang.org/x/net/trace"
 )
 
@@ -33,17 +32,17 @@ func Middleware(opts ...Option) httpwares.Middleware {
 				tr.LazyPrintf("%v: %v", k, req.Header.Get(k))
 			}
 			tr.LazyPrintf("invoking next chain")
-			newResp := middleware.NewWrapResponseWriter(resp, req.ProtoMajor)
+			newResp := httpwares.WrappedResponseWriter(resp)
 			next.ServeHTTP(newResp, req)
 			tr.LazyPrintf("tags: ")
 			for k, v := range http_ctxtags.ExtractInbound(req).Values() {
 				tr.LazyPrintf("%v: %v", k, v)
 			}
-			tr.LazyPrintf("Response: %d", newResp.Status())
+			tr.LazyPrintf("Response: %d", newResp.StatusCode())
 			for k, _ := range resp.Header() {
 				tr.LazyPrintf("%v: %v", k, resp.Header().Get(k))
 			}
-			if o.statusCodeErrorFunc(newResp.Status()) {
+			if o.statusCodeErrorFunc(newResp.StatusCode()) {
 				tr.SetError()
 			}
 		})

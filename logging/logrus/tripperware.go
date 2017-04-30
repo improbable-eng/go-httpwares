@@ -27,6 +27,7 @@ func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware {
 				"span.kind":     "client",
 				"http.url.path": req.URL.Path,
 				"http.time_ms":  timeDiffToMilliseconds(startTime),
+				"http.request.length_bytes": req.ContentLength,
 			}
 			for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
 				fields[k] = v
@@ -41,11 +42,62 @@ func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware {
 				fields["http.proto_major"] = resp.ProtoMajor
 				fields["http.response_bytes"] = resp.ContentLength
 				fields["http.status"] = resp.StatusCode
-
+				fields["http.response.length_bytes"] = resp.ContentLength
 				level = o.levelFunc(resp.StatusCode)
 			}
 			levelLogf(entry.WithFields(fields), level, msg)
 			return resp, err
 		})
 	}
+}
+
+func logError(o *options, e *logrus.Entry, err error) {
+	levelLogf(e, o.levelForConnectivityError, "request failed to execute, see err")
+}
+
+func captureTripperwareRequestContent(req *http.Request, entry *logrus.Entry) error {
+	// All requests created with http.NewRequest will have a GetBody method set, even if the user created
+	// a body manually.
+	if req.GetBody == nil {
+		if req.Body != nil {
+			entry.Infof("request body capture skipped, missing GetBody method while Body set")
+		}
+		return nil
+	}
+	bodyReader, err := req.GetBody()
+	if err != nil {
+		return err
+	}
+	content, err := ioutil.ReadAll(bodyReader)
+	if err != nil {
+		return err
+	}
+	if strings.HasPrefix(strings.ToLower(req.Header.Get("content-type")), "application/json") {
+		entry.WithField("http.request.body_json", json.RawMessage(content)).Info("request body captured in http.request.body_json field")
+	} else {
+		entry.WithField("http.request.body_raw", base64.StdEncoding.EncodeToString(content)).Info("request body captured in http.request.body_raw field")
+	}
+	return nil
+}
+
+func captureTripperwareResponseContent(resp *http.Response, entry *logrus.Entry) error {
+	if resp.ContentLength <= 0 {
+		// TODO(mwitkow): Deal with response.Uncompressed and gzip encoding (Content Length -1).
+		if resp.ContentLength != 0 {
+			entry.Infof("response body capture skipped, content length negative")
+		}
+		return nil
+	}
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err // this is an error form the response reading, potentially a connection failure
+	}
+	// Make sure we give the Response back its body so the client can read it.
+	resp.Body = ioutil.NopCloser(bytes.NewReader(content))
+	if strings.HasPrefix(strings.ToLower(resp.Header.Get("content-type")), "application/json") {
+		entry.WithField("http.response.body_json", json.RawMessage(content)).Info("request body captured in http.response.body_json field")
+	} else {
+		entry.WithField("http.response.body_raw", base64.StdEncoding.EncodeToString(content)).Info("request body captured in http.response.body_raw field")
+	}
+	return nil
 }
