@@ -10,7 +10,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
-	"github.com/pressly/chi/middleware"
 	"golang.org/x/net/context"
 )
 
@@ -26,15 +25,15 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 	return func(nextHandler http.Handler) http.Handler {
 		o := evaluateMiddlewareOpts(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			wrappedResp := wrapResponse(req, resp)
+			wrappedResp := httpwares.WrapResponseWriter(resp)
 			nCtx := newContextLogger(req.Context(), entry, req)
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, req.WithContext(nCtx))
 			postCallFields := logrus.Fields{
-				"http.status":  wrappedResp.Status(),
+				"http.status":  wrappedResp.StatusCode(),
 				"http.time_ms": timeDiffToMilliseconds(startTime),
 			}
-			level := o.levelFunc(wrappedResp.Status())
+			level := o.levelFunc(wrappedResp.StatusCode())
 			levelLogf(
 				ExtractFromContext(nCtx).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
@@ -46,20 +45,13 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 func newContextLogger(ctx context.Context, entry *logrus.Entry, r *http.Request) context.Context {
 	callLog := entry.WithFields(
 		logrus.Fields{
-			"system":           SystemField,
-			"span.kind":        "server",
-			"http.url.path":    r.URL.Path,
-			"http.proto_major": r.ProtoMajor,
+			"system":                    SystemField,
+			"span.kind":                 "server",
+			"http.url.path":             r.URL.Path,
+			"http.proto_major":          r.ProtoMajor,
+			"http.request.length_bytes": r.ContentLength,
 		})
 	return toContext(ctx, callLog)
-}
-
-func wrapResponse(req *http.Request, resp http.ResponseWriter) middleware.WrapResponseWriter {
-	if wrapped, ok := resp.(middleware.WrapResponseWriter); ok {
-		return wrapped
-	} else {
-		return middleware.NewWrapResponseWriter(resp, req.ProtoMajor)
-	}
 }
 
 func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...interface{}) {

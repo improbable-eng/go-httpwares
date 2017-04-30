@@ -13,7 +13,6 @@ import (
 	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	"github.com/pressly/chi/middleware"
 )
 
 var (
@@ -32,7 +31,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 			tags := http_ctxtags.ExtractInbound(req)
 			newReq, serverSpan := newServerSpanFromInbound(req, o.tracer)
 			hackyInjectOpentracingIdsToTags(serverSpan, tags)
-			newResp := middleware.NewWrapResponseWriter(resp, req.ProtoMajor)
+			newResp := httpwares.WrapResponseWriter(resp)
 			next.ServeHTTP(newResp, newReq)
 
 			// The other middleware could have changed the tags, so only update the tags here.
@@ -40,8 +39,8 @@ func Middleware(opts ...Option) httpwares.Middleware {
 				serverSpan.SetTag(k, v)
 			}
 			serverSpan.SetOperationName(operationNameFromReqHandler(req))
-			ext.HTTPStatusCode.Set(serverSpan, uint16(newResp.Status()))
-			if o.statusCodeErrorFunc(newResp.Status()) {
+			ext.HTTPStatusCode.Set(serverSpan, uint16(newResp.StatusCode()))
+			if o.statusCodeErrorFunc(newResp.StatusCode()) {
 				ext.Error.Set(serverSpan, true)
 			}
 			serverSpan.Finish()
