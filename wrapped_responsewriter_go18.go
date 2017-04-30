@@ -3,10 +3,10 @@
 package httpwares
 
 import (
-	"net/http"
+	"bufio"
 	"io"
 	"net"
-	"bufio"
+	"net/http"
 )
 
 // newWrappedResponseWriter handles the four different methods of upgrading a
