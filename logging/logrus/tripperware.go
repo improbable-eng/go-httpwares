@@ -67,6 +67,10 @@ func logError(o *options, e *logrus.Entry, err error) {
 	levelLogf(e, o.levelForConnectivityError, "request failed to execute, see err")
 }
 
+func headerIsJson(header http.Header) bool {
+	return strings.HasPrefix(strings.ToLower(header.Get("content-type")), "application/json")
+}
+
 func captureTripperwareRequestContent(req *http.Request, entry *logrus.Entry) error {
 	// All requests created with http.NewRequest will have a GetBody method set, even if the user created
 	// a body manually.
@@ -84,7 +88,7 @@ func captureTripperwareRequestContent(req *http.Request, entry *logrus.Entry) er
 	if err != nil {
 		return err
 	}
-	if strings.HasPrefix(strings.ToLower(req.Header.Get("content-type")), "application/json") {
+	if headerIsJson(req.Header) {
 		entry.WithField("http.request.body_json", json.RawMessage(content)).Info("request body captured in http.request.body_json field")
 	} else {
 		entry.WithField("http.request.body_raw", base64.StdEncoding.EncodeToString(content)).Info("request body captured in http.request.body_raw field")
@@ -106,7 +110,7 @@ func captureTripperwareResponseContent(resp *http.Response, entry *logrus.Entry)
 	}
 	// Make sure we give the Response back its body so the client can read it.
 	resp.Body = ioutil.NopCloser(bytes.NewReader(content))
-	if strings.HasPrefix(strings.ToLower(resp.Header.Get("content-type")), "application/json") {
+	if headerIsJson(resp.Header) {
 		entry.WithField("http.response.body_json", json.RawMessage(content)).Info("request body captured in http.response.body_json field")
 	} else {
 		entry.WithField("http.response.body_raw", base64.StdEncoding.EncodeToString(content)).Info("request body captured in http.response.body_raw field")

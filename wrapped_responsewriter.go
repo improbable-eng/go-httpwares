@@ -64,7 +64,7 @@ func (w *wrappedResponseWriter) WriteHeader(code int) {
 	}
 }
 func (w *wrappedResponseWriter) Write(buf []byte) (int, error) {
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK) // double writes are ignored.
 	n, err := w.ResponseWriter.Write(buf)
 	for _, o := range w.observerWrite {
 		o(w, buf, n, err)

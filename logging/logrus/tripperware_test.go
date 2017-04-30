@@ -36,11 +36,11 @@ func customTripperwareCodeToLevel(statusCode int) logrus.Level {
 	return level
 }
 
-func tripperRequestCaptureDeciderForTest(req *http.Request) bool {
+func requestCaptureDeciderForTest(req *http.Request) bool {
 	return strings.HasPrefix(req.URL.Path, "/capture/request/")
 }
 
-func tripperResponseCaptureDeciderForTest(req *http.Request, code int) bool {
+func responseCaptureDeciderForTest(req *http.Request, code int) bool {
 	return strings.HasPrefix(req.URL.Path, "/capture/request/")
 }
 
@@ -95,8 +95,8 @@ func TestLogrusTripperwareSuite(t *testing.T) {
 				http_logrus.Tripperware(
 					logrus.NewEntry(log),
 					http_logrus.WithLevels(customTripperwareCodeToLevel),
-					http_logrus.WithRequestBodyCapture(tripperRequestCaptureDeciderForTest),
-					http_logrus.WithResponseBodyCapture(tripperResponseCaptureDeciderForTest),
+					http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
+					http_logrus.WithResponseBodyCapture(responseCaptureDeciderForTest),
 				),
 			},
 		},
@@ -132,7 +132,7 @@ func (s *LogrusTripperwareSuite) getOutputJSONs() []string {
 	return ret
 }
 
-func (s *LogrusTripperwareSuite) xTestSuccessfulCall() {
+func (s *LogrusTripperwareSuite) TestSuccessfulCall() {
 	client := s.NewClient() // client always dials localhost.
 	req, _ := http.NewRequest("GET", "https://fakeaddress.fakeaddress.com/someurl", nil)
 	req = req.WithContext(s.SimpleCtx())
@@ -149,7 +149,7 @@ func (s *LogrusTripperwareSuite) xTestSuccessfulCall() {
 	assert.Contains(s.T(), m, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) xTestSuccessfulCall_WithRemap() {
+func (s *LogrusTripperwareSuite) TestSuccessfulCall_WithRemap() {
 	for _, tcase := range []struct {
 		code  int
 		level logrus.Level
@@ -192,7 +192,7 @@ func (s *LogrusTripperwareSuite) xTestSuccessfulCall_WithRemap() {
 	}
 }
 
-func (s *LogrusTripperwareSuite) xTestCapture_SimpleJSONBothWays() {
+func (s *LogrusTripperwareSuite) TestCapture_SimpleJSONBothWays() {
 	client := s.NewClient() // client always dials localhost.
 	content := new(bytes.Buffer)
 	content.WriteString(`{"somekey": "some_value", "someint": 4}`)
@@ -221,7 +221,7 @@ func (s *LogrusTripperwareSuite) xTestCapture_SimpleJSONBothWays() {
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) xTestCapture_PlainTextBothWays() {
+func (s *LogrusTripperwareSuite) TestCapture_PlainTextBothWays() {
 	client := s.NewClient() // client always dials localhost.
 	content := new(bytes.Buffer)
 	content.WriteString(`Lorem Ipsum, who cares?`)
@@ -247,7 +247,7 @@ func (s *LogrusTripperwareSuite) xTestCapture_PlainTextBothWays() {
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) xTestCapture_StreamFileUp() {
+func (s *LogrusTripperwareSuite) TestCapture_StreamFileUp() {
 	client := s.NewClient() // client always dials localhost.
 	reader, writer := io.Pipe()
 	multipartContent := multipart.NewWriter(writer)
@@ -298,7 +298,6 @@ func (s *LogrusTripperwareSuite) TestCapture_ChunkResponse() {
 		assert.Contains(s.T(), m, `"http.url.path": "/capture/request/chunked"`, "all lines must contain method name")
 	}
 	respMsg, finalMsg := msgs[1], msgs[2]
-	s.T().Log(respMsg)
 	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
 	assert.Contains(s.T(), respMsg, `response body capture skipped, content length negative`, "response capture should log a helpful message")
 	assert.Contains(s.T(), respMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
