@@ -28,9 +28,10 @@ func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware {
 		return httpwares.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			startTime := time.Now()
 			fields := logrus.Fields{
-				"system":        SystemField,
-				"span.kind":     "client",
-				"http.url.path": req.URL.Path,
+				"system":                    SystemField,
+				"span.kind":                 "client",
+				"http.url.path":             req.URL.Path,
+				"http.request.length_bytes": req.ContentLength,
 			}
 			for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
 				fields[k] = v
