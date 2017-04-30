@@ -5,7 +5,6 @@ package http_logrus_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,17 +12,13 @@ import (
 	"strings"
 	"testing"
 
-	"net/http/httputil"
-
 	"mime/multipart"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/logging/logrus"
 	"github.com/mwitkow/go-httpwares/tags"
-	"github.com/mwitkow/go-httpwares/testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -36,120 +31,40 @@ func customTripperwareCodeToLevel(statusCode int) logrus.Level {
 	return level
 }
 
-func requestCaptureDeciderForTest(req *http.Request) bool {
-	return strings.HasPrefix(req.URL.Path, "/capture/request/")
-}
-
-func responseCaptureDeciderForTest(req *http.Request, code int) bool {
-	return strings.HasPrefix(req.URL.Path, "/capture/request/")
-}
-
-func handlerForTestingOfCaptures(t *testing.T) http.Handler {
-	m := http.NewServeMux()
-	m.HandleFunc("/capture/request/chunked", handlerChunked())
-	m.HandleFunc("/capture/request/plain", handlerPlainText())
-	m.Handle("/", &loggingHandler{t})
-	return m
-}
-
-func handlerPlainText() http.HandlerFunc {
-	return func(resp http.ResponseWriter, req *http.Request) {
-		resp.Header().Set("content-type", "text/html")
-		resp.WriteHeader(200)
-		resp.Write([]byte(`<body><head>Nothing</head></body>`))
-	}
-}
-
-func handlerChunked() http.HandlerFunc {
-	return func(resp http.ResponseWriter, req *http.Request) {
-		resp.Header().Set("content-type", "text/plain")
-		resp.Header().Set("Transfer-Encoding", "chunked")
-		resp.WriteHeader(200)
-		chunkedWriter := httputil.NewChunkedWriter(resp)
-		for i := 0; i < 100; i++ {
-			chunkedWriter.Write([]byte("value"))
-			resp.(http.Flusher).Flush()
-		}
-		chunkedWriter.Close()
-	}
-}
-
 func TestLogrusTripperwareSuite(t *testing.T) {
 	if strings.HasPrefix(runtime.Version(), "go1.7") {
 		t.Skipf("Skipping due to json.RawMessage incompatibility with go1.7")
 		return
 	}
-	b := &bytes.Buffer{}
-	log := logrus.New()
-	log.Out = b
-	log.Level = logrus.DebugLevel
-	log.Formatter = &logrus.JSONFormatter{DisableTimestamp: true}
-
-	s := &LogrusTripperwareSuite{
-		log:    logrus.NewEntry(log),
-		buffer: b,
-		WaresTestSuite: &httpwares_testing.WaresTestSuite{
-			Handler: handlerForTestingOfCaptures(t),
-			ClientTripperware: httpwares.TripperwareChain{
-				http_ctxtags.Tripperware(),
-				http_logrus.Tripperware(
-					logrus.NewEntry(log),
-					http_logrus.WithLevels(customTripperwareCodeToLevel),
-					http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
-					http_logrus.WithResponseBodyCapture(responseCaptureDeciderForTest),
-				),
-			},
-		},
+	s := &logrusTripperwareSuite{newLogrusBaseTestSuite(t)}
+	s.logrusBaseTestSuite.logger.Level = logrus.DebugLevel // most of our log statements are on debug level.
+	// In this suite we have all the Tripperware, but no Middleware.
+	s.WaresTestSuite.ClientTripperware = httpwares.TripperwareChain{
+		http_ctxtags.Tripperware(),
+		http_logrus.Tripperware(
+			logrus.NewEntry(s.logrusBaseTestSuite.logger),
+			http_logrus.WithLevels(customTripperwareCodeToLevel),
+			http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
+			http_logrus.WithResponseBodyCapture(responseCaptureDeciderForTest),
+		),
 	}
 	suite.Run(t, s)
 }
 
-type LogrusTripperwareSuite struct {
-	*httpwares_testing.WaresTestSuite
-	buffer *bytes.Buffer
-	log    *logrus.Entry
+type logrusTripperwareSuite struct {
+	*logrusBaseTestSuite
 }
 
-func (s *LogrusTripperwareSuite) SetupTest() {
-	s.buffer.Reset()
-}
-
-func (s *LogrusTripperwareSuite) getOutputJSONs() []string {
-	ret := []string{}
-	dec := json.NewDecoder(s.buffer)
-	for {
-		var val map[string]json.RawMessage
-		err := dec.Decode(&val)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			s.T().Fatalf("failed decoding output from Logrus JSON: %v", err)
-		}
-		out, _ := json.MarshalIndent(val, "", "  ")
-		ret = append(ret, string(out))
-	}
-	return ret
-}
-
-func (s *LogrusTripperwareSuite) TestSuccessfulCall() {
-	client := s.NewClient() // client always dials localhost.
+func (s *logrusTripperwareSuite) TestSuccessfulCall() {
 	req, _ := http.NewRequest("GET", "https://fakeaddress.fakeaddress.com/someurl", nil)
-	req = req.WithContext(s.SimpleCtx())
-	_, err := client.Do(req)
-	require.NoError(s.T(), err, "call shouldn't fail")
-	msgs := s.getOutputJSONs()
-	require.Len(s.T(), msgs, 1, "one log statements should be logged")
+	msgs := s.makeSuccessfulRequestWithAssertions(req, 1, "client")
 	m := msgs[0]
-	assert.Contains(s.T(), m, `"span.kind": "client"`, "all lines must contain indicator of being a client call")
-	assert.Contains(s.T(), m, `"http.host": "fakeaddress.fakeaddress.com"`, "all lines must contain http.host from http_ctxtags")
-	assert.Contains(s.T(), m, `"http.url.path": "/someurl"`, "all lines must contain method name")
-	assert.Contains(s.T(), m, `"level": "debug"`, "warningf handler myst be logged as this..")
+	assert.Contains(s.T(), m, `"level": "debug"`, "handlers by default log on debug")
 	assert.Contains(s.T(), m, `"msg": "request completed"`, "interceptor message must contain string")
 	assert.Contains(s.T(), m, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) TestSuccessfulCall_WithRemap() {
+func (s *logrusTripperwareSuite) TestSuccessfulCall_WithRemap() {
 	for _, tcase := range []struct {
 		code  int
 		level logrus.Level
@@ -176,14 +91,9 @@ func (s *LogrusTripperwareSuite) TestSuccessfulCall_WithRemap() {
 			msg:   "ImATeapot is overwritten to ErrorLevel with customMiddlewareCodeToLevel override, which probably didn't work",
 		},
 	} {
-		s.buffer.Reset()
-		client := s.NewClient()
+		s.SetupTest()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("https://something.local/someurl?code=%d", tcase.code), nil)
-		req = req.WithContext(s.SimpleCtx())
-		_, err := client.Do(req)
-		require.NoError(s.T(), err, "call shouldn't fail")
-		msgs := s.getOutputJSONs()
-		require.Len(s.T(), msgs, 1, "only one message is logged")
+		msgs := s.makeSuccessfulRequestWithAssertions(req, 1, "client")
 		m := msgs[0]
 		assert.Contains(s.T(), m, `"http.host": "something.local"`, "all lines must contain method name")
 		assert.Contains(s.T(), m, `"http.url.path": "/someurl"`, "all lines must contain method name")
@@ -192,26 +102,13 @@ func (s *LogrusTripperwareSuite) TestSuccessfulCall_WithRemap() {
 	}
 }
 
-func (s *LogrusTripperwareSuite) TestCapture_SimpleJSONBothWays() {
-	client := s.NewClient() // client always dials localhost.
+func (s *logrusTripperwareSuite) TestCapture_SimpleJSONBothWays() {
 	content := new(bytes.Buffer)
 	content.WriteString(`{"somekey": "some_value", "someint": 4}`)
 	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/json", content)
-	req = req.WithContext(s.SimpleCtx())
 	req.Header.Set("content-type", "application/JSON")
-	resp, err := client.Do(req)
-	require.NoError(s.T(), err, "call shouldn't fail")
-	pingBack, err := httpwares_testing.DecodePingBack(resp)
-	require.NoError(s.T(), err, "decoding pingback response must not fail, otherwise we change the behaviour of the client")
-	assert.Equal(s.T(), "application/JSON", pingBack.Headers["Content-Type"], "the content must be preserved")
+	msgs := s.makeSuccessfulRequestWithAssertions(req, 3, "client")
 
-	msgs := s.getOutputJSONs()
-	require.Len(s.T(), msgs, 3, "three log statements should be logged: captured req, captured resp, and final one")
-	for _, m := range msgs {
-		assert.Contains(s.T(), m, `"span.kind": "client"`, "all lines must contain indicator of being a client call")
-		assert.Contains(s.T(), m, `"http.host": "fakeaddress.fakeaddress.com"`, "all lines must contain http.host from http_ctxtags")
-		assert.Contains(s.T(), m, `"http.url.path": "/capture/request/json"`, "all lines must contain method name")
-	}
 	reqMsg, respMsg, finalMsg := msgs[0], msgs[1], msgs[2]
 	assert.Contains(s.T(), reqMsg, `"level": "info"`, "request captures should be logged as info")
 	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
@@ -221,24 +118,14 @@ func (s *LogrusTripperwareSuite) TestCapture_SimpleJSONBothWays() {
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) TestCapture_PlainTextBothWays() {
-	client := s.NewClient() // client always dials localhost.
+func (s *logrusTripperwareSuite) TestCapture_PlainTextBothWays() {
 	content := new(bytes.Buffer)
 	content.WriteString(`Lorem Ipsum, who cares?`)
 	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/plain", content)
-	req = req.WithContext(s.SimpleCtx())
 	req.Header.Set("content-type", "text/plain")
-	_, err := client.Do(req)
-	require.NoError(s.T(), err, "call shouldn't fail")
-	msgs := s.getOutputJSONs()
-	require.Len(s.T(), msgs, 3, "three log statements should be logged: captured req, captured resp, and final one")
-	for _, m := range msgs {
-		assert.Contains(s.T(), m, `"span.kind": "client"`, "all lines must contain indicator of being a client call")
-		assert.Contains(s.T(), m, `"http.host": "fakeaddress.fakeaddress.com"`, "all lines must contain http.host from http_ctxtags")
-		assert.Contains(s.T(), m, `"http.url.path": "/capture/request/plain"`, "all lines must contain method name")
-	}
-	reqMsg, respMsg, finalMsg := msgs[0], msgs[1], msgs[2]
+	msgs := s.makeSuccessfulRequestWithAssertions(req, 3, "client")
 
+	reqMsg, respMsg, finalMsg := msgs[0], msgs[1], msgs[2]
 	assert.Contains(s.T(), reqMsg, `"level": "info"`, "request captures should be logged as info")
 	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
 	assert.Contains(s.T(), reqMsg, `"http.request.body_raw": "`, "request capture should log messages as strings")
@@ -247,8 +134,8 @@ func (s *LogrusTripperwareSuite) TestCapture_PlainTextBothWays() {
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) TestCapture_StreamFileUp() {
-	client := s.NewClient() // client always dials localhost.
+func (s *logrusTripperwareSuite) TestCapture_StreamFileUp() {
+	// Make a request that simulates a file upload.
 	reader, writer := io.Pipe()
 	multipartContent := multipart.NewWriter(writer)
 	go func() {
@@ -259,47 +146,29 @@ func (s *LogrusTripperwareSuite) TestCapture_StreamFileUp() {
 		multipartContent.Close()
 		writer.Close()
 	}()
+
 	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/json", reader)
 	req.Header.Set("content-type", multipartContent.FormDataContentType())
-	req = req.WithContext(s.SimpleCtx())
-	resp, err := client.Do(req)
-	pingBack, err := httpwares_testing.DecodePingBack(resp)
-	require.NoError(s.T(), err, "decoding pingback response must not fail, otherwise we change the behaviour of the client")
-	assert.Contains(s.T(), pingBack.Headers["Content-Type"], "multipart/form-data", "the content must be preserved")
+	msgs := s.makeSuccessfulRequestWithAssertions(req, 4, "client")
 
-	require.NoError(s.T(), err, "call shouldn't fail")
-	msgs := s.getOutputJSONs()
-	require.Len(s.T(), msgs, 3, "three log statements should be logged: captured req, captured resp, and final one")
-	for _, m := range msgs {
-		assert.Contains(s.T(), m, `"span.kind": "client"`, "all lines must contain indicator of being a client call")
-		assert.Contains(s.T(), m, `"http.host": "fakeaddress.fakeaddress.com"`, "all lines must contain http.host from http_ctxtags")
-		assert.Contains(s.T(), m, `"http.url.path": "/capture/request/json"`, "all lines must contain method name")
-	}
 	reqMsg, finalMsg := msgs[0], msgs[2]
 	assert.Contains(s.T(), reqMsg, `"level": "info"`, "request captures should be logged as info")
 	assert.Contains(s.T(), reqMsg, `request body capture skipped, missing GetBody method while Body set`, "request should log a helpful error")
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusTripperwareSuite) TestCapture_ChunkResponse() {
-	client := s.NewClient() // client always dials localhost.
+func (s *logrusTripperwareSuite) TestCapture_ChunkResponse() {
 	content := new(bytes.Buffer)
 	content.WriteString(`{"somekey": "some_value", "someint": 4}`)
 	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/chunked", content)
-	req = req.WithContext(s.SimpleCtx())
 	req.Header.Set("content-type", "application/JSON")
-	_, err := client.Do(req)
-	require.NoError(s.T(), err, "call shouldn't fail")
-	msgs := s.getOutputJSONs()
-	require.Len(s.T(), msgs, 3, "three log statements should be logged: captured req, captured resp, and final one")
-	for _, m := range msgs {
-		assert.Contains(s.T(), m, `"span.kind": "client"`, "all lines must contain indicator of being a client call")
-		assert.Contains(s.T(), m, `"http.host": "fakeaddress.fakeaddress.com"`, "all lines must contain http.host from http_ctxtags")
-		assert.Contains(s.T(), m, `"http.url.path": "/capture/request/chunked"`, "all lines must contain method name")
-	}
+	msgs := s.makeSuccessfulRequestWithAssertions(req, 3, "client")
 	respMsg, finalMsg := msgs[1], msgs[2]
 	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
 	assert.Contains(s.T(), respMsg, `response body capture skipped, content length negative`, "response capture should log a helpful message")
 	assert.Contains(s.T(), respMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
+}
+
+func (s *logrusTripperwareSuite) assertCommonLogLinesForRequest(req *http.Request) {
 }
