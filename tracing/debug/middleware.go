@@ -32,7 +32,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 				tr.LazyPrintf("%v: %v", k, req.Header.Get(k))
 			}
 			tr.LazyPrintf("invoking next chain")
-			newResp := httpwares.WrappedResponseWriter(resp)
+			newResp := httpwares.WrapResponseWriter(resp)
 			next.ServeHTTP(newResp, req)
 			tr.LazyPrintf("tags: ")
 			for k, v := range http_ctxtags.ExtractInbound(req).Values() {
