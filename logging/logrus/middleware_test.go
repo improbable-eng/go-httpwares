@@ -4,15 +4,11 @@
 package http_logrus_test
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"runtime"
 	"strings"
 	"testing"
-
-	"mime/multipart"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
@@ -104,69 +100,4 @@ func (s *logrusMiddlewareTestSuite) TestPingError_WithCustomLevels() {
 		assert.Contains(s.T(), m, fmt.Sprintf(`"http.status": %d`, tcase.code), "all lines must contain method name")
 		assert.Contains(s.T(), m, fmt.Sprintf(`"level": "%s"`, tcase.level.String()), tcase.msg)
 	}
-}
-
-func (s *logrusMiddlewareTestSuite) TestCapture_SimpleJSONBothWays() {
-	content := new(bytes.Buffer)
-	content.WriteString(`{"somekey": "some_value", "someint": 4}`)
-	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/json", content)
-	req.Header.Set("content-type", "Application/JSON")
-	msgs := s.makeSuccessfulRequestWithAssertions(req, 4, "server")
-
-	reqMsg, respMsg, finalMsg := msgs[0], msgs[2], msgs[3]
-	assert.Contains(s.T(), reqMsg, `"level": "info"`, "request captures should be logged as info")
-	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
-	assert.Contains(s.T(), reqMsg, `"http.request.body_json": {`, "request capture should log messages as structued json")
-	assert.Contains(s.T(), respMsg, `"http.response.body_json": {`, "response capture should log messages as structued json")
-	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
-}
-
-func (s *logrusMiddlewareTestSuite) TestCapture_PlainTextBothWays() {
-	content := new(bytes.Buffer)
-	content.WriteString(`Lorem Ipsum, who cares?`)
-	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/plain", content)
-	req.Header.Set("content-type", "text/plain")
-	msgs := s.makeSuccessfulRequestWithAssertions(req, 3, "server")
-
-	reqMsg, respMsg, finalMsg := msgs[0], msgs[1], msgs[2]
-	assert.Contains(s.T(), reqMsg, `"level": "info"`, "request captures should be logged as info")
-	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
-	assert.Contains(s.T(), reqMsg, `"http.request.body_raw": "`, "request capture should log messages as strings")
-	assert.Contains(s.T(), respMsg, `"http.response.body_raw": "`, "response capture should log messages as strings")
-	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
-}
-
-func (s *logrusMiddlewareTestSuite) TestCapture_ChunkResponse() {
-	content := new(bytes.Buffer)
-	content.WriteString(`{"somekey": "some_value", "someint": 4}`)
-	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/chunked", content)
-	req.Header.Set("content-type", "application/json")
-	msgs := s.makeSuccessfulRequestWithAssertions(req, 3, "server")
-
-	respMsg, finalMsg := msgs[1], msgs[2]
-	assert.Contains(s.T(), respMsg, `"level": "info"`, "response captures should be logged as info")
-	assert.Contains(s.T(), respMsg, `response body capture skipped, transfer encoding is not identity`, "response capture should log a helpful message")
-	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
-}
-
-func (s *logrusMiddlewareTestSuite) TestCapture_StreamFileUp() {
-	// Simulate an async upload of a file.
-	reader, writer := io.Pipe()
-	multipartContent := multipart.NewWriter(writer)
-	go func() {
-		mimeWriter, _ := multipartContent.CreateFormFile("somefield", "filename.txt")
-		for i := 0; i < 10; i++ {
-			mimeWriter.Write([]byte("something\n"))
-		}
-		multipartContent.Close()
-		writer.Close()
-	}()
-	req, _ := http.NewRequest("POST", "https://fakeaddress.fakeaddress.com/capture/request/json", reader)
-	req.Header.Set("content-type", multipartContent.FormDataContentType())
-	msgs := s.makeSuccessfulRequestWithAssertions(req, 4, "server")
-
-	reqMsg, finalMsg := msgs[0], msgs[3]
-	assert.Contains(s.T(), reqMsg, `"level": "info"`, "request captures should be logged as info")
-	assert.Contains(s.T(), reqMsg, `request body capture skipped, content length negative`, "request should log a helpful error")
-	assert.Contains(s.T(), finalMsg, `"http.time_ms":`, "interceptor log statement should contain execution time")
 }

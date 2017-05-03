@@ -34,6 +34,44 @@ func AsHttpLogger(logger *logrus.Entry) *log.Logger
 ```
 AsHttpLogger returns the given logrus instance as an HTTP logger.
 
+#### func  ContentCaptureMiddleware
+
+```go
+func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Middleware
+```
+ContentCaptureMiddleware is a server-side http ware for logging contents of HTTP
+requests and responses (body and headers).
+
+Only requests with a set Content-Length will be captured, with no streaming or
+chunk encoding supported. Only responses with Content-Length set are captured,
+no gzipped, chunk-encoded responses are supported.
+
+The body will be recorded as a separate log message. Body of `application/json`
+will be captured as http.request.body_json (in structured JSON form) and others
+will be captured as http.request.body_raw logrus field (raw base64-encoded
+value).
+
+This *must* be used together with http_logrus.Middleware, as it relies on the
+logger provided there. However, you can override the `logrus.Entry` that is used
+for logging, allowing for logging to a separate backend (e.g. a different file).
+
+#### func  ContentCaptureTripperware
+
+```go
+func ContentCaptureTripperware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Tripperware
+```
+ContentCaptureTripperware is a client-side http ware for logging contents of
+HTTP requests and responses (body and headers).
+
+Only requests with a set GetBody field will be captured (strings, bytes etc).
+Only responses with Content-Length are captured, with no support for
+chunk-encoded responses.
+
+The body will be recorded as a separate log message. Body of `application/json`
+will be captured as http.request.body_json (in structured JSON form) and others
+will be captured as http.request.body_raw logrus field (raw base64-encoded
+value).
+
 #### func  DefaultMiddlewareCodeToLevel
 
 ```go

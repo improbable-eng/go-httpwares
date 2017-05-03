@@ -25,29 +25,24 @@ type options struct {
 	responseCaptureFunc       func(r *http.Request, status int) bool
 }
 
-func evaluateOptions(opts []Option) *options {
+func evaluateTripperwareOpts(opts []Option) *options {
 	optCopy := &options{}
 	*optCopy = *defaultOptions
+	optCopy.levelFunc = DefaultTripperwareCodeToLevel
 	for _, o := range opts {
 		o(optCopy)
 	}
 	return optCopy
 }
 
-func evaluateTripperwareOpts(opts []Option) *options {
-	o := evaluateOptions(opts)
-	if o.levelFunc == nil {
-		o.levelFunc = DefaultTripperwareCodeToLevel
-	}
-	return o
-}
-
 func evaluateMiddlewareOpts(opts []Option) *options {
-	o := evaluateOptions(opts)
-	if o.levelFunc == nil {
-		o.levelFunc = DefaultMiddlewareCodeToLevel
+	optCopy := &options{}
+	*optCopy = *defaultOptions
+	optCopy.levelFunc = DefaultMiddlewareCodeToLevel
+	for _, o := range opts {
+		o(optCopy)
 	}
-	return o
+	return optCopy
 }
 
 type Option func(*options)

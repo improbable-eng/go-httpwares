@@ -106,7 +106,7 @@ func (s *WaresTestSuite) ServerAddr() string {
 }
 
 func (s *WaresTestSuite) SimpleCtx() context.Context {
-	ctx, _ := context.WithTimeout(context.TODO(), 1*time.Second)
+	ctx, _ := context.WithTimeout(context.TODO(), 15000*time.Second)
 	return ctx
 }
 
