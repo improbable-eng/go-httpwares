@@ -84,21 +84,21 @@ func (s *PrometheusSuite) TestHandledCounterCountsValues() {
 	}
 }
 
-func (s *PrometheusSuite) TestResponseHeaderDurations() {
+func (s *PrometheusSuite) TestMiddlewareResponseHeaderDurations() {
 	beforeBucketCount := sumCountersForMetricAndLabels(s.T(), "http_server_response_headers_duration_seconds_count", testHandlerGroup, testHandlerName, "get")
 	s.makeCall(s.T(), "GET", 201)
 	afterBucketCount := sumCountersForMetricAndLabels(s.T(), "http_server_response_headers_duration_seconds_count", testHandlerGroup, testHandlerName, "get")
 	assert.Equal(s.T(), beforeBucketCount+1, afterBucketCount, "we should increment at least one bucket")
 }
 
-func (s *PrometheusSuite) TestRequestCompleteDuration() {
+func (s *PrometheusSuite) TestMiddlewareRequestCompleteDuration() {
 	beforeBucketCount := sumCountersForMetricAndLabels(s.T(), "http_server_request_duration_seconds_count", testHandlerGroup, testHandlerName, "head")
 	s.makeCall(s.T(), "HEAD", 201)
 	afterBucketCount := sumCountersForMetricAndLabels(s.T(), "http_server_request_duration_seconds_count", testHandlerGroup, testHandlerName, "head")
 	assert.Equal(s.T(), beforeBucketCount+1, afterBucketCount, "we should increment at least one bucket")
 }
 
-func (s *PrometheusSuite) TestResponseSize() {
+func (s *PrometheusSuite) TestMiddlewareResponseSize() {
 	beforeBucketSum := sumCountersForMetricAndLabels(s.T(), "http_server_response_size_bytes_sum", testHandlerGroup, testHandlerName, "get")
 	beforeBucketCount := sumCountersForMetricAndLabels(s.T(), "http_server_response_size_bytes_count", testHandlerGroup, testHandlerName, "get")
 	s.makeCall(s.T(), "GET", 201)
