@@ -3,11 +3,7 @@
 
 package http_prometheus
 
-import (
-	"net/http"
-
-	"github.com/prometheus/client_golang/prometheus"
-)
+import "github.com/prometheus/client_golang/prometheus"
 
 var (
 	// DefaultResponseSizeHistogram are the default (if enabled) buckets for response size histograms.
@@ -45,7 +41,12 @@ func evaluateOptions(opts []Option) *options {
 
 type Option func(*options)
 
-type serviceNameDetectorFunc func(req *http.Request) string
+// WithNamespace customizes the Prometheus namespace (first component before first underscore) of all the metrics.
+func WithNamespace(prometheusNamespace string) Option {
+	return func(o *options) {
+		o.namespace = prometheusNamespace
+	}
+}
 
 // WithResponseSizeHistogram enables the middleware to record the sizes of response messages in bytes.
 //

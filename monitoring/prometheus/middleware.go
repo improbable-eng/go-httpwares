@@ -8,15 +8,9 @@ import (
 
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/mwitkow/go-httpwares/tags"
-)
-
-var (
-	// SystemField is used in every log statement made through http_logrus. Can be overwritten before any initialization code.
-	SystemField = "http"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Middleware is a server-side http ware for monitoring handlers using Prometheus counters and histograms.
@@ -33,7 +27,10 @@ var (
 //
 //
 // All handlers will have a Logrus logger in their context, which can be fetched using `http_logrus.Extract`.
-func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
+//
+// Please note that the instantiation of this Middleware can panic if it has been previously instantiated with other
+// options due to clashes in Prometheus metric names.
+func Middleware(opts ...Option) httpwares.Middleware {
 	return func(nextHandler http.Handler) http.Handler {
 		o := evaluateOptions(opts)
 		requestHandledCounter := buildServerHandledCounter(o)
@@ -41,29 +38,38 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 		responseHeadersHistogram := buildServerResponseHeadersHistogram(o)
 		requestHistogram := buildServerRequestCompletionHistogram(o)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			handlerGroup := "unspecified"
-			handlerName := "unspecified"
-			tags := http_ctxtags.ExtractInbound(req).Values()
-			if g, ok := tags[http_ctxtags.TagForHandlerGroup].(string); ok {
-				handlerGroup = g
-			}
-			if n, ok := tags[http_ctxtags.TagForHandlerName].(string); ok {
-				handlerName = n
-			}
+			handlerGroup, handlerName := handlerInfoFromRequest(req)
 			startTime := time.Now()
-			wrappedResp := httpwares.
-			nextHandler.ServeHTTP(wrappedResp, req.WithContext(nCtx))
-			postCallFields := logrus.Fields{
-				"http.status":  wrappedResp.Status(),
-				"http.time_ms": timeDiffToMilliseconds(startTime),
+			wrappedResp := httpwares.WrapResponseWriter(resp)
+			if responseHeadersHistogram != nil {
+				wrappedResp.ObserveWriteHeader(func(writer httpwares.WrappedResponseWriter, code int) {
+					responseHeadersHistogram.WithLabelValues(handlerGroup, handlerName, sanitizeMethod(req.Method)).Observe(timeDiffToSeconds(startTime))
+				})
 			}
-			level := o.levelFunc(wrappedResp.Status())
-			levelLogf(
-				ExtractFromContext(nCtx).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
-				level,
-				"handled")
+			nextHandler.ServeHTTP(wrappedResp, req)
+
+			requestHandledCounter.WithLabelValues(handlerGroup, handlerName, sanitizeMethod(req.Method), sanitizeCode(wrappedResp.StatusCode())).Inc()
+			if requestHistogram != nil {
+				requestHistogram.WithLabelValues(handlerGroup, handlerName, sanitizeMethod(req.Method)).Observe(timeDiffToSeconds(startTime))
+			}
+			if responseSizeHistogram != nil {
+				responseSizeHistogram.WithLabelValues(handlerGroup, handlerName, sanitizeMethod(req.Method)).Observe(float64(wrappedResp.MessageLength()))
+			}
 		})
 	}
+}
+
+func handlerInfoFromRequest(req *http.Request) (handlerGroup string, handlerName string) {
+	handlerGroup = "unspecified"
+	handlerName = "unspecified"
+	tags := http_ctxtags.ExtractInbound(req).Values()
+	if g, ok := tags[http_ctxtags.TagForHandlerGroup].(string); ok {
+		handlerGroup = g
+	}
+	if n, ok := tags[http_ctxtags.TagForHandlerName].(string); ok {
+		handlerName = n
+	}
+	return handlerGroup, handlerGroup
 }
 
 func buildServerHandledCounter(o *options) *prometheus.CounterVec {
@@ -144,4 +150,12 @@ func buildServerRequestCompletionHistogram(o *options) *prometheus.HistogramVec 
 		return aeErr.ExistingCollector.(*prometheus.HistogramVec)
 	}
 	panic("failed registering request_duration_seconds error in http_prometheus: %v" + err.Error())
+}
+
+func timeDiffToSeconds(start time.Time) float64 {
+	d := time.Now().Sub(start).Seconds()
+	if d < 0.0 {
+		return 0.0
+	}
+	return d
 }
