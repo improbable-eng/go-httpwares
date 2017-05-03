@@ -26,8 +26,6 @@ import (
 //      http_server_request_duration_seconds
 //
 //
-// All handlers will have a Logrus logger in their context, which can be fetched using `http_logrus.Extract`.
-//
 // Please note that the instantiation of this Middleware can panic if it has been previously instantiated with other
 // options due to clashes in Prometheus metric names.
 func Middleware(opts ...Option) httpwares.Middleware {
@@ -78,7 +76,7 @@ func buildServerHandledCounter(o *options) *prometheus.CounterVec {
 			Namespace: o.namespace,
 			Subsystem: "server",
 			Name:      "requests_total",
-			Help:      "Total number of requests completed completed on the server.",
+			Help:      "Total number of requests completed on the server.",
 		}, []string{"handler_group", "handler_name", "method", "code"})
 	err := o.registry.Register(cv)
 	if err == nil {
