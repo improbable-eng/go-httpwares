@@ -21,31 +21,35 @@ func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware {
 		o := evaluateTripperwareOpts(opts)
 		return httpwares.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			startTime := time.Now()
+			fields := newClientRequestFields(req)
 			resp, err := next.RoundTrip(req)
-			fields := logrus.Fields{
-				"system":        SystemField,
-				"span.kind":     "client",
-				"http.url.path": req.URL.Path,
-				"http.time_ms":  timeDiffToMilliseconds(startTime),
-			}
-			for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
-				fields[k] = v
-			}
-			level := logrus.DebugLevel
-			msg := "request completed"
 			if err != nil {
-				fields[logrus.ErrorKey] = err
-				level = o.levelForConnectivityError
-				msg = "request failed to execute, see err"
-			} else {
-				fields["http.proto_major"] = resp.ProtoMajor
-				fields["http.response_bytes"] = resp.ContentLength
-				fields["http.status"] = resp.StatusCode
-
-				level = o.levelFunc(resp.StatusCode)
+				logError(o.levelForConnectivityError, entry.WithFields(fields), err)
+				return resp, err
 			}
-			levelLogf(entry.WithFields(fields), level, msg)
-			return resp, err
+			fields["http.time_ms"] = timeDiffToMilliseconds(startTime)
+			fields["http.proto_major"] = resp.ProtoMajor
+			fields["http.response.length_bytes"] = resp.ContentLength
+			fields["http.status"] = resp.StatusCode
+			levelLogf(entry.WithFields(fields), o.levelFunc(resp.StatusCode), "request completed")
+			return resp, nil
 		})
 	}
+}
+
+func logError(level logrus.Level, e *logrus.Entry, err error) {
+	levelLogf(e.WithError(err), level, "request failed to execute, see err")
+}
+
+func newClientRequestFields(req *http.Request) logrus.Fields {
+	fields := logrus.Fields{
+		"system":                    SystemField,
+		"span.kind":                 "client",
+		"http.url.path":             req.URL.Path,
+		"http.request.length_bytes": req.ContentLength,
+	}
+	for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
+		fields[k] = v
+	}
+	return fields
 }

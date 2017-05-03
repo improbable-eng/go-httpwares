@@ -10,7 +10,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -26,32 +25,39 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 		o := evaluateMiddlewareOpts(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := httpwares.WrapResponseWriter(resp)
-			nCtx := newContextLogger(req.Context(), entry, req)
+			newEntry := entry.WithFields(newServerRequestFields(req))
+			newReq := req.WithContext(toContext(req.Context(), newEntry))
+			var capture *responseCapture
+			wrappedResp.ObserveWriteHeader(func(w httpwares.WrappedResponseWriter, code int) {
+				if o.responseCaptureFunc(req, code) {
+					capture = captureMiddlewareResponseContent(w, Extract(newReq))
+				}
+			})
 			startTime := time.Now()
-			nextHandler.ServeHTTP(wrappedResp, req.WithContext(nCtx))
+			nextHandler.ServeHTTP(wrappedResp, newReq)
+			capture.finish() // captureResponse has a nil check, this can be nil
+
 			postCallFields := logrus.Fields{
 				"http.status":  wrappedResp.StatusCode(),
 				"http.time_ms": timeDiffToMilliseconds(startTime),
 			}
 			level := o.levelFunc(wrappedResp.StatusCode())
 			levelLogf(
-				ExtractFromContext(nCtx).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
+				Extract(newReq).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
 				"handled")
 		})
 	}
 }
 
-func newContextLogger(ctx context.Context, entry *logrus.Entry, r *http.Request) context.Context {
-	callLog := entry.WithFields(
-		logrus.Fields{
-			"system":                    SystemField,
-			"span.kind":                 "server",
-			"http.url.path":             r.URL.Path,
-			"http.proto_major":          r.ProtoMajor,
-			"http.request.length_bytes": r.ContentLength,
-		})
-	return toContext(ctx, callLog)
+func newServerRequestFields(req *http.Request) logrus.Fields {
+	return logrus.Fields{
+		"system":                    SystemField,
+		"span.kind":                 "server",
+		"http.url.path":             req.URL.Path,
+		"http.proto_major":          req.ProtoMajor,
+		"http.request.length_bytes": req.ContentLength,
+	}
 }
 
 func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...interface{}) {

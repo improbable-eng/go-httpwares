@@ -4,10 +4,7 @@
 package http_logrus_test
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"runtime"
 	"strings"
@@ -17,36 +14,9 @@ import (
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/logging/logrus"
 	"github.com/mwitkow/go-httpwares/tags"
-	"github.com/mwitkow/go-httpwares/testing"
-	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
-
-const (
-	testCodeImATeapot = http.StatusTeapot
-)
-
-type loggingHandler struct {
-	*testing.T
-}
-
-func (a *loggingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	assert.NotNil(a.T, http_logrus.Extract(req), "handlers must have access to the loggermust have ")
-	http_ctxtags.ExtractInbound(req).Set("custom_tags.string", "something").Set("custom_tags.int", 1337)
-	http_logrus.Extract(req).Warningf("handler_log")
-	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
-}
-
-type LogrusLoggingTestSuite struct {
-	*httpwares_testing.WaresTestSuite
-	mockTracer *mocktracer.MockTracer
-}
-
-func (s *LogrusLoggingTestSuite) SetupTest() {
-	s.mockTracer.Reset()
-}
 
 func customMiddlewareCodeToLevel(statusCode int) logrus.Level {
 	if statusCode == testCodeImATeapot {
@@ -57,69 +27,35 @@ func customMiddlewareCodeToLevel(statusCode int) logrus.Level {
 	return level
 }
 
-func TestLogrusLoggingSuite(t *testing.T) {
+func TestLogrusMiddlewareSuite(t *testing.T) {
 	if strings.HasPrefix(runtime.Version(), "go1.7") {
 		t.Skipf("Skipping due to json.RawMessage incompatibility with go1.7")
 		return
 	}
-	b := &bytes.Buffer{}
-	log := logrus.New()
-	log.Out = b
-	log.Formatter = &logrus.JSONFormatter{DisableTimestamp: true}
-	s := &LogrusLoggingSuite{
-		log:    logrus.NewEntry(log),
-		buffer: b,
-		WaresTestSuite: &httpwares_testing.WaresTestSuite{
-			Handler: &loggingHandler{t},
-			ServerMiddleware: []httpwares.Middleware{
-				http_ctxtags.Middleware("my_service"),
-				http_logrus.Middleware(logrus.NewEntry(log), http_logrus.WithLevels(customMiddlewareCodeToLevel)),
-			},
-		},
+	s := &logrusMiddlewareTestSuite{newLogrusBaseTestSuite(t)}
+	// In this suite we have all the Middleware, but no Tripperware.
+	s.WaresTestSuite.ServerMiddleware = []httpwares.Middleware{
+		http_ctxtags.Middleware("my_service"),
+		http_logrus.Middleware(
+			logrus.NewEntry(s.logrusBaseTestSuite.logger),
+			http_logrus.WithLevels(customMiddlewareCodeToLevel),
+			http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
+			http_logrus.WithResponseBodyCapture(responseCaptureDeciderForTest),
+		),
 	}
 	suite.Run(t, s)
 }
 
-type LogrusLoggingSuite struct {
-	*httpwares_testing.WaresTestSuite
-	buffer *bytes.Buffer
-	log    *logrus.Entry
+type logrusMiddlewareTestSuite struct {
+	*logrusBaseTestSuite
 }
 
-func (s *LogrusLoggingSuite) SetupTest() {
-	s.buffer.Reset()
-}
-
-func (s *LogrusLoggingSuite) getOutputJSONs() []string {
-	ret := []string{}
-	dec := json.NewDecoder(s.buffer)
-	for {
-		var val map[string]json.RawMessage
-		err := dec.Decode(&val)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			s.T().Fatalf("failed decoding output from Logrus JSON: %v", err)
-		}
-		out, _ := json.MarshalIndent(val, "", "  ")
-		ret = append(ret, string(out))
-	}
-	return ret
-}
-
-func (s *LogrusLoggingSuite) TestPing_WithCustomTags() {
-	client := s.NewClient()
+func (s *logrusMiddlewareTestSuite) TestPing_WithCustomTags() {
 	req, _ := http.NewRequest("GET", "https://something.local/someurl", nil)
-	req = req.WithContext(s.SimpleCtx())
-	_, err := client.Do(req)
-	require.NoError(s.T(), err, "call shouldn't fail")
-	msgs := s.getOutputJSONs()
-	require.Len(s.T(), msgs, 2, "two log statements should be logged")
+	msgs := s.makeSuccessfulRequestWithAssertions(req, 2, "server")
+
+	// Assert custom tags exist
 	for _, m := range msgs {
-		assert.Contains(s.T(), m, `"span.kind": "server"`, "all lines must contain indicator of being a server call")
-		assert.Contains(s.T(), m, `"http.host": "something.local"`, "all lines must contain method name")
-		assert.Contains(s.T(), m, `"http.url.path": "/someurl"`, "all lines must contain method name")
 		assert.Contains(s.T(), m, `"custom_tags.string": "something"`, "all lines must contain `custom_tags.string` set by AddFields")
 		assert.Contains(s.T(), m, `"custom_tags.int": 1337`, "all lines must contain `custom_tags.int` set by AddFields")
 	}
@@ -130,7 +66,7 @@ func (s *LogrusLoggingSuite) TestPing_WithCustomTags() {
 	assert.Contains(s.T(), msgs[1], `"http.time_ms":`, "interceptor log statement should contain execution time")
 }
 
-func (s *LogrusLoggingSuite) TestPingError_WithCustomLevels() {
+func (s *logrusMiddlewareTestSuite) TestPingError_WithCustomLevels() {
 	for _, tcase := range []struct {
 		code  int
 		level logrus.Level
@@ -157,17 +93,10 @@ func (s *LogrusLoggingSuite) TestPingError_WithCustomLevels() {
 			msg:   "ImATeapot is overwritten to ErrorLevel with customMiddlewareCodeToLevel override, which probably didn't work",
 		},
 	} {
-		s.buffer.Reset()
-		client := s.NewClient()
+		s.SetupTest()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("https://something.local/someurl?code=%d", tcase.code), nil)
-		req = req.WithContext(s.SimpleCtx())
-		_, err := client.Do(req)
-		require.NoError(s.T(), err, "call shouldn't fail")
-		msgs := s.getOutputJSONs()
-		require.Len(s.T(), msgs, 2, "both the handler and the interceptor print messages")
+		msgs := s.makeSuccessfulRequestWithAssertions(req, 2, "server")
 		m := msgs[1]
-		assert.Contains(s.T(), m, `"http.host": "something.local"`, "all lines must contain method name")
-		assert.Contains(s.T(), m, `"http.url.path": "/someurl"`, "all lines must contain method name")
 		assert.Contains(s.T(), m, fmt.Sprintf(`"http.status": %d`, tcase.code), "all lines must contain method name")
 		assert.Contains(s.T(), m, fmt.Sprintf(`"level": "%s"`, tcase.level.String()), tcase.msg)
 	}

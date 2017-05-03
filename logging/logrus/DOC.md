@@ -34,6 +34,44 @@ func AsHttpLogger(logger *logrus.Entry) *log.Logger
 ```
 AsHttpLogger returns the given logrus instance as an HTTP logger.
 
+#### func  ContentCaptureMiddleware
+
+```go
+func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Middleware
+```
+ContentCaptureMiddleware is a server-side http ware for logging contents of HTTP
+requests and responses (body and headers).
+
+Only requests with a set Content-Length will be captured, with no streaming or
+chunk encoding supported. Only responses with Content-Length set are captured,
+no gzipped, chunk-encoded responses are supported.
+
+The body will be recorded as a separate log message. Body of `application/json`
+will be captured as http.request.body_json (in structured JSON form) and others
+will be captured as http.request.body_raw logrus field (raw base64-encoded
+value).
+
+This *must* be used together with http_logrus.Middleware, as it relies on the
+logger provided there. However, you can override the `logrus.Entry` that is used
+for logging, allowing for logging to a separate backend (e.g. a different file).
+
+#### func  ContentCaptureTripperware
+
+```go
+func ContentCaptureTripperware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Tripperware
+```
+ContentCaptureTripperware is a client-side http ware for logging contents of
+HTTP requests and responses (body and headers).
+
+Only requests with a set GetBody field will be captured (strings, bytes etc).
+Only responses with Content-Length are captured, with no support for
+chunk-encoded responses.
+
+The body will be recorded as a separate log message. Body of `application/json`
+will be captured as http.request.body_json (in structured JSON form) and others
+will be captured as http.request.body_raw logrus field (raw base64-encoded
+value).
+
 #### func  DefaultMiddlewareCodeToLevel
 
 ```go
@@ -100,8 +138,8 @@ logger of requests. This includes logging of errors.
 type CodeToLevel func(httpStatusCode int) logrus.Level
 ```
 
-CodeToLevel function defines the mapping between gRPC return codes and
-interceptor log level.
+CodeToLevel user functions define the mapping between HTTP status codes and
+logrus log levels.
 
 #### type Option
 
@@ -127,3 +165,40 @@ codes to log levels.
 
 By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware,
 and `DefaultTripperwareCodeToLevel` is used for client-side tripperware.
+
+#### func  WithRequestBodyCapture
+
+```go
+func WithRequestBodyCapture(deciderFunc func(r *http.Request) bool) Option
+```
+WithRequestBodyCapture enables recording of request body pre-handling/pre-call.
+
+The body will be recorded as a separate log message. Body of `application/json`
+will be captured as http.request.body_json (in structured JSON form) and others
+will be captured as http.request.body_raw logrus field (raw base64-encoded
+value).
+
+For tripperware, only requests with Body of type `bytes.Buffer`,
+`strings.Reader`, `bytes.Buffer`, or with a specified `GetBody` function will be
+captured.
+
+For middleware, only requests with a set Content-Length will be captured, with
+no streaming or chunk encoding supported.
+
+This option creates a copy of the body per request, so please use with care.
+
+#### func  WithResponseBodyCapture
+
+```go
+func WithResponseBodyCapture(deciderFunc func(r *http.Request, status int) bool) Option
+```
+WithResponseBodyCapture enables recording of response body
+post-handling/post-call.
+
+The body will be recorded as a separate log message. Body of `application/json`
+will be captured as http.response.body_json (in structured JSON form) and others
+will be captured as http.response.body_raw logrus field (raw base64-encoded
+value).
+
+Only responses with Content-Length will be captured, with non-default
+Transfer-Encoding not being supported.
