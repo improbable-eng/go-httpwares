@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/tags"
 	"context"
+	"errors"
+	"fmt"
+
+	"github.com/mwitkow/go-httpwares"
 )
 
 // Tripperware is client side HTTP ware that retries the requests.
@@ -27,43 +28,37 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			if !o.decider(req) && !isEnabled(req.Context()) {
 				return next.RoundTrip(req)
 			}
-			if o.maxRetry == 0 {
+			if o.maxRetry == 0 || req.GetBody == nil {
+				// If we are configured to do no retries or the lack of GetBody function doesn't allow for re-reads of
+				// body data.
 				return next.RoundTrip(req)
 			}
-
-			var lastErr error
+			var err error
+			var lastResp *http.Response
 			for attempt := uint(0); attempt < o.maxRetry; attempt++ {
+				thisReq := req.WithContext(req.Context()) // make a copy.
+				thisReq.Body, err = req.GetBody()
+				if err != nil {
+					return nil, fmt.Errorf("failed reading body for retry: %v", err)
+				}
 				if err := waitRetryBackoff(attempt, req.Context(), o); err != nil {
+					return nil, err // context errors from req.Context()
+				}
+				lastResp, err = next.RoundTrip(thisReq)
+				if err == nil {
+					if !o.discarder(lastResp) {
+						return lastResp, nil
+					}
+				} else if isContextError(err) {
 					return nil, err
 				}
-
 			}
-			startTime := time.Now()
-			resp, err := next.RoundTrip(req)
-			fields := logrus.Fields{
-				"system":        SystemField,
-				"span.kind":     "client",
-				"http.url.path": req.URL.Path,
-				"http.time_ms":  timeDiffToMilliseconds(startTime),
+			if lastResp != nil {
+				return lastResp, err
+			} else if err != nil {
+				return nil, err
 			}
-			for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
-				fields[k] = v
-			}
-			level := logrus.DebugLevel
-			msg := "request completed"
-			if err != nil {
-				fields[logrus.ErrorKey] = err
-				level = o.levelForConnectivityError
-				msg = "request failed to execute, see err"
-			} else {
-				fields["http.proto_major"] = resp.ProtoMajor
-				fields["http.response_bytes"] = resp.ContentLength
-				fields["http.status"] = resp.StatusCode
-
-				level = o.levelFunc(resp.StatusCode)
-			}
-			levelLogf(entry.WithFields(fields), level, msg)
-			return resp, err
+			return nil, errors.New("maximum retry budget reached")
 		})
 	}
 }
@@ -81,4 +76,8 @@ func waitRetryBackoff(attempt uint, parentCtx context.Context, opt *options) err
 		}
 	}
 	return nil
+}
+
+func isContextError(err error) bool {
+	return err == context.DeadlineExceeded || err == context.Canceled
 }
