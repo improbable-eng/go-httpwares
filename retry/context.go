@@ -22,7 +22,7 @@ func Enable(req *http.Request) *http.Request {
 	if isEnabled(req.Context()) {
 		return req
 	}
-	return req.WithContext(req.Context())
+	return req.WithContext(EnableContext(req.Context()))
 }
 
 // Enable turns on the retry logic for a given request's context, regardless of what the retry decider says.
