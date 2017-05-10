@@ -25,7 +25,9 @@ func DefaultResponseDiscarder(resp *http.Response) bool
 DefaultResponseDiscarder is the default implementation that discards responses
 in order to try again.
 
-It is fairly conservative and reject all 5xx responses.
+It is fairly conservative and rejects (and thus retries) responses with 500, 503
+and 504 status codes. See
+https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#5xx_Server_error
 
 #### func  DefaultRetriableDecider
 
@@ -46,7 +48,7 @@ func Enable(req *http.Request) *http.Request
 Enable turns on the retry logic for a given request, regardless of what the
 retry decider says.
 
-Please make sure you do not pass around this request's context around.
+Please make sure you do not pass around this request's context.
 
 #### func  EnableContext
 
@@ -56,7 +58,7 @@ func EnableContext(ctx context.Context) context.Context
 Enable turns on the retry logic for a given request's context, regardless of
 what the retry decider says.
 
-Please make sure you do not pass around this request's context around.
+Please make sure you do not pass around this request's context.
 
 #### func  Tripperware
 

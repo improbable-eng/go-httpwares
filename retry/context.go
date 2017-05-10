@@ -17,7 +17,7 @@ var (
 
 // Enable turns on the retry logic for a given request, regardless of what the retry decider says.
 //
-// Please make sure you do not pass around this request's context around.
+// Please make sure you do not pass around this request's context.
 func Enable(req *http.Request) *http.Request {
 	if isEnabled(req.Context()) {
 		return req
@@ -27,7 +27,7 @@ func Enable(req *http.Request) *http.Request {
 
 // Enable turns on the retry logic for a given request's context, regardless of what the retry decider says.
 //
-// Please make sure you do not pass around this request's context around.
+// Please make sure you do not pass around this request's context.
 func EnableContext(ctx context.Context) context.Context {
 	if isEnabled(ctx) {
 		return ctx
