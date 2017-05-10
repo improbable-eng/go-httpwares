@@ -31,6 +31,10 @@ var (
 	expectedContent = "SomeReallyLongString"
 )
 
+func requestDeciderForTesting(req *http.Request) bool {
+	return req.Method == "GET" || req.Method == "PUT"
+}
+
 type failingHandler struct {
 	*testing.T
 	reqCounter uint
@@ -82,7 +86,11 @@ func TestRetryTripperwareSuite(t *testing.T) {
 		WaresTestSuite: &httpwares_testing.WaresTestSuite{
 			Handler: f,
 			ClientTripperware: httpwares.TripperwareChain{
-				http_retry.Tripperware(http_retry.WithMax(5)),
+				http_retry.Tripperware(
+					http_retry.WithMax(5),
+					http_retry.WithDecider(requestDeciderForTesting),
+					http_retry.WithBackoff(http_retry.BackoffLinear(retryTimeout)),
+				),
 			},
 		},
 	}
@@ -97,18 +105,54 @@ type RetryTripperwareSuite struct {
 func (s *RetryTripperwareSuite) SetupTest() {
 }
 
-func (s *RetryTripperwareSuite) createRequest(ctx context.Context) *http.Request {
+func (s *RetryTripperwareSuite) createRequest(method string, ctx context.Context) *http.Request {
 	content := strings.NewReader(expectedContent)
-	req, _ := http.NewRequest("GET", "https://something.local/someurl", content)
+	req, _ := http.NewRequest(method, "https://something.local/someurl", content)
 	req = req.WithContext(ctx)
 	return req
 }
 
-func (s *RetryTripperwareSuite) TestRetryPasses() {
+func (s *RetryTripperwareSuite) TestRetryPassesOnEnabled() {
 	s.f.resetFailingConfiguration(3, noSleep)
-	req := s.createRequest(s.SimpleCtx())
+	req := s.createRequest("PUT", s.SimpleCtx())
 	resp, err := s.NewClient().Do(req)
 	require.NoError(s.T(), err, "call shouldn't fail")
-	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should have the same type")
+	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should succeed")
 	require.EqualValues(s.T(), 3, s.f.requestCount(), "3 requests should be retried to meet the modulo")
+}
+
+func (s *RetryTripperwareSuite) TestRetryFailsOnMoreThanRetryCount() {
+	s.f.resetFailingConfiguration(10, noSleep)
+	req := s.createRequest("PUT", s.SimpleCtx())
+	resp, err := s.NewClient().Do(req)
+	require.NoError(s.T(), err, "call shouldn't fail")
+	assert.Equal(s.T(), failureCode, resp.StatusCode, "failure code should be propagated")
+	require.EqualValues(s.T(), 5, s.f.requestCount(), "backend should see all the retry calls")
+}
+
+func (s *RetryTripperwareSuite) TestRetryFailsOnNonRetriable() {
+	s.f.resetFailingConfiguration(2, noSleep)
+	req := s.createRequest("POST", s.SimpleCtx()) // post is not retriable
+	resp, err := s.NewClient().Do(req)
+	require.NoError(s.T(), err, "call shouldn't fail")
+	assert.Equal(s.T(), failureCode, resp.StatusCode, "failure code should be propagated")
+	require.EqualValues(s.T(), 1, s.f.requestCount(), "backend should see only one request")
+}
+
+func (s *RetryTripperwareSuite) TestRetryWorksWithAnEnable() {
+	s.f.resetFailingConfiguration(3, noSleep)
+	req := s.createRequest("POST", s.SimpleCtx()) // post is not retriable
+	resp, err := s.NewClient().Do(http_retry.Enable(req))
+	require.NoError(s.T(), err, "call shouldn't fail")
+	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should succeed")
+	require.EqualValues(s.T(), 3, s.f.requestCount(), "backend should see all the retry calls")
+}
+
+func (s *RetryTripperwareSuite) TestTimesoutTheContextAnyway() {
+	s.f.resetFailingConfiguration(4, noSleep)
+	ctx, _ := context.WithTimeout(s.SimpleCtx(), 2*retryTimeout) // should be enough for 2 calls
+	req := s.createRequest("PUT", ctx)                           // PUT is retriable
+	_, err := s.NewClient().Do(req)
+	require.Error(s.T(), err, "call should fail with a context deadline exceeded")
+	require.EqualValues(s.T(), 2, s.f.requestCount(), "backend should see two calls")
 }
