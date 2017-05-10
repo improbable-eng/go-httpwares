@@ -4,12 +4,10 @@
 package http_retry
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"time"
-
-	"context"
-	"errors"
-	"fmt"
 
 	"github.com/mwitkow/go-httpwares"
 )
@@ -45,12 +43,10 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 					return nil, err // context errors from req.Context()
 				}
 				lastResp, err = next.RoundTrip(thisReq)
-				if err == nil {
-					if !o.discarder(lastResp) {
-						return lastResp, nil
-					}
-				} else if isContextError(err) {
-					return nil, err
+				if isContextError(err) {
+					break // do not retry context errors
+				} else if err == nil && !o.discarder(lastResp) {
+					break // do not retry responses that the discarder tells us we should not discard
 				}
 			}
 			if lastResp != nil {
@@ -58,7 +54,7 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			} else if err != nil {
 				return nil, err
 			}
-			return nil, errors.New("maximum retry budget reached")
+			return nil, fmt.Errorf("maximum retry budget of %d reached", o.maxRetry)
 		})
 	}
 }

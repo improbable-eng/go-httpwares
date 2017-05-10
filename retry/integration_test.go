@@ -4,16 +4,12 @@
 package http_retry_test
 
 import (
-	"testing"
-
-	"net/http"
-
-	"strings"
-
-	"sync"
-	"time"
-
 	"io/ioutil"
+	"net/http"
+	"strings"
+	"sync"
+	"testing"
+	"time"
 
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/retry"
