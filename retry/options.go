@@ -89,7 +89,8 @@ func DefaultRetriableDecider(req *http.Request) bool {
 
 // DefaultResponseDiscarder is the default implementation that discards responses in order to try again.
 //
-// It is fairly conservative and reject all 5xx responses.
+// It is fairly conservative and rejects (and thus retries) responses with 500, 503 and 504 status codes.
+// See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#5xx_Server_error
 func DefaultResponseDiscarder(resp *http.Response) bool {
-	return resp.StatusCode >= 500
+	return resp.StatusCode == 500 || resp.StatusCode == 503 || resp.StatusCode == 504
 }
