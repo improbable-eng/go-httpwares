@@ -58,6 +58,7 @@ func (s *logrusTripperwareSuite) TestSuccessfulCall() {
 	assert.Contains(s.T(), m, `"level": "debug"`, "handlers by default log on debug")
 	assert.Contains(s.T(), m, `"msg": "request completed"`, "interceptor message must contain string")
 	assert.Contains(s.T(), m, `"http.time_ms":`, "interceptor log statement should contain execution time")
+	s.T().Log(m)
 }
 
 func (s *logrusTripperwareSuite) TestSuccessfulCall_WithRemap() {

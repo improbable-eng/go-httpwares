@@ -39,5 +39,4 @@ passing through the Tripperware/Middleware will be passed through this function 
 Tags fields are typed, and shallow and should follow the OpenTracing semantics convention (be prefixed with `http.`):
 https://github.com/opentracing/specification/blob/master/semantic_conventions.md
 */
-
 package http_ctxtags

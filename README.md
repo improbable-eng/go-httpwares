@@ -16,6 +16,9 @@ The libraries are meant to rely only on the standard `http` package functions an
 
 These are meant as excellent companions for interceptors of [`github.com/grpc-ecosystem/go-grpc-middleware`](https://github.com/grpc-ecosystem/go-grpc-middleware) making it easy to build combined gRPC/HTTP Golang servers.
 
+For generic tripperware and middleware functions, see this package [documentation](DOC.md). For functionality wares, see
+their relevant docs.
+
 ## Why?
 
 Having a consistent set of inbound and outbound handlers make it easy to log, trace, auth and debug your handlers.
