@@ -1,85 +1,110 @@
 # http_opentracing
---
-    import "github.com/mwitkow/go-httpwares/tracing/opentracing"
+`import "github.com/mwitkow/go-httpwares/tracing/opentracing"`
 
+* [Overview](#pkg-overview)
+* [Imported Packages](#pkg-imports)
+* [Index](#pkg-index)
 
-## Usage
+## <a name="pkg-overview">Overview</a>
+`http_opentracing` adds OpenTracing wares for HTTP libraries.
 
-```go
+### OpenTracing Wares
+These are both client-side and server-side wares for OpenTracing. They are a provider-agnostic, with backends
+such as Zipkin, or Google Stackdriver Trace.
+
+For a service that sends out requests and receives requests, you *need* to use both, otherwise downstream requests will
+not have the appropriate requests propagated.
+
+All server-side spans are tagged with http_ctxtags information.
+
+For more information see:
+<a href="http://opentracing.io/documentation/">http://opentracing.io/documentation/</a>
+<a href="https://github.com/opentracing/specification/blob/master/semantic_conventions.md">https://github.com/opentracing/specification/blob/master/semantic_conventions.md</a>
+
+## <a name="pkg-imports">Imported Packages</a>
+
+- [github.com/mwitkow/go-httpwares](./../..)
+- [github.com/mwitkow/go-httpwares/tags](./../../tags)
+- [github.com/opentracing/opentracing-go](https://godoc.org/github.com/opentracing/opentracing-go)
+- [github.com/opentracing/opentracing-go/ext](https://godoc.org/github.com/opentracing/opentracing-go/ext)
+- [github.com/opentracing/opentracing-go/log](https://godoc.org/github.com/opentracing/opentracing-go/log)
+
+## <a name="pkg-index">Index</a>
+* [Constants](#pkg-constants)
+* [func DefaultStatusCodeIsError(statusCode int) bool](#DefaultStatusCodeIsError)
+* [func Middleware(opts ...Option) httpwares.Middleware](#Middleware)
+* [func Tripperware(opts ...Option) httpwares.Tripperware](#Tripperware)
+* [type FilterFunc](#FilterFunc)
+* [type Option](#Option)
+  * [func WithFilterFunc(f FilterFunc) Option](#WithFilterFunc)
+  * [func WithStatusCodeIsError(f StatusCodeIsError) Option](#WithStatusCodeIsError)
+  * [func WithTracer(tracer opentracing.Tracer) Option](#WithTracer)
+* [type StatusCodeIsError](#StatusCodeIsError)
+
+#### <a name="pkg-files">Package files</a>
+[doc.go](./doc.go) [id_extract.go](./id_extract.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
+
+## <a name="pkg-constants">Constants</a>
+``` go
 const (
-	TagTraceId = "trace.traceid"
-	TagSpanId  = "trace.spanid"
+    TagTraceId = "trace.traceid"
+    TagSpanId  = "trace.spanid"
 )
 ```
 
-#### func  DefaultStatusCodeIsError
-
-```go
+## <a name="DefaultStatusCodeIsError">func</a> [DefaultStatusCodeIsError](./options.go#L69)
+``` go
 func DefaultStatusCodeIsError(statusCode int) bool
 ```
 
-#### func  Middleware
-
-```go
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L23)
+``` go
 func Middleware(opts ...Option) httpwares.Middleware
 ```
 Middleware returns a http.Handler middleware values for request tags.
 
-#### func  Tripperware
-
-```go
+## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L20)
+``` go
 func Tripperware(opts ...Option) httpwares.Tripperware
 ```
-Tripperware returns a piece of client-side Tripperware that forwards opentracing
-tokens.
+Tripperware returns a piece of client-side Tripperware that forwards opentracing tokens.
 
-#### type FilterFunc
-
-```go
+## <a name="FilterFunc">type</a> [FilterFunc](./options.go#L23)
+``` go
 type FilterFunc func(req *http.Request) bool
 ```
-
-FilterFunc allows users to provide a function that filters out certain methods
-from being traced.
+FilterFunc allows users to provide a function that filters out certain methods from being traced.
 
 If it returns false, the given request will not be traced.
 
-#### type Option
-
-```go
+## <a name="Option">type</a> [Option](./options.go#L46)
+``` go
 type Option func(*options)
 ```
 
-
-#### func  WithFilterFunc
-
-```go
+### <a name="WithFilterFunc">func</a> [WithFilterFunc](./options.go#L49)
+``` go
 func WithFilterFunc(f FilterFunc) Option
 ```
-WithFilterFunc customizes the function used for deciding whether a given call is
-traced or not.
+WithFilterFunc customizes the function used for deciding whether a given call is traced or not.
 
-#### func  WithStatusCodeIsError
-
-```go
+### <a name="WithStatusCodeIsError">func</a> [WithStatusCodeIsError](./options.go#L56)
+``` go
 func WithStatusCodeIsError(f StatusCodeIsError) Option
 ```
-WithStatusCodeIsError customizes the function used for deciding whether a given
-call was an error
+WithStatusCodeIsError customizes the function used for deciding whether a given call was an error
 
-#### func  WithTracer
-
-```go
+### <a name="WithTracer">func</a> [WithTracer](./options.go#L63)
+``` go
 func WithTracer(tracer opentracing.Tracer) Option
 ```
-WithTracer sets a custom tracer to be used for this middleware, otherwise the
-opentracing.GlobalTracer is used.
+WithTracer sets a custom tracer to be used for this middleware, otherwise the opentracing.GlobalTracer is used.
 
-#### type StatusCodeIsError
-
-```go
+## <a name="StatusCodeIsError">type</a> [StatusCodeIsError](./options.go#L26)
+``` go
 type StatusCodeIsError func(statusCode int) bool
 ```
+StatusCodeIsError allows the customization of which requests are considered errors in the tracing system.
 
-StatusCodeIsError allows the customization of which requests are considered
-errors in the tracing system.
+- - -
+Generated by [godoc2ghmd](https://github.com/GandalfUK/godoc2ghmd)
