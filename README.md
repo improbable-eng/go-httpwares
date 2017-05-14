@@ -47,10 +47,10 @@ The middlewares provided in this repo are:
  * Monitoring
    * [monitoring/prometheus](monitoring/prometheus) - [Prometheus](https://prometheus.io/) server-side monitoring broken down by handler group and name.
  * Tracing
-   * [tracing/debug] - `/debug/request` page for server-side HTTP request handling, allowing you to inspect failed requests, inbound headers etc.
-   * [tracing/opentracing] - server-side request [Opentracing](http://opentracing.io/) middleware that is tags-aware and supports client-side propagation
+   * [tracing/debug](tracing/debug)  - `/debug/request` page for server-side HTTP request handling, allowing you to inspect failed requests, inbound headers etc.
+   * [tracing/opentracing](tracing/opentracing) - server-side request [Opentracing](http://opentracing.io/) middleware that is tags-aware and supports client-side propagation
  * Logging
-   * [logging/logrus] - a [Logrus](https://github.com/sirupsen/logrus)-based logger for HTTP requests:
+   * [logging/logrus](logging/logrus) - a [Logrus](https://github.com/sirupsen/logrus)-based logger for HTTP requests:
       * injects a request-scoped `logrus.Entry` into the `http.Request.Context` for further logging
       * optionally supports logging of inbound request content and response contents in raw or JSON format
 
@@ -71,10 +71,10 @@ The tripperwares provided in thsi repo are:
  * Monitoring
    * [monitoring/prometheus](monitoring/prometheus) - [Prometheus](https://prometheus.io/) client-side monitoring broken down by service name
  * Tracing
-   * [tracing/debug] - `/debug/request` page for client-side HTTP request debugging, allowing  you to inspect failed requests, outbound headers, payload sizes etc etc.
-   * [tracing/opentracing] - client-side request [Opentracing](http://opentracing.io/) middleware that is tags-aware and supports propagation of traces from server-side middleware
+   * [tracing/debug](tracing/debug) - `/debug/request` page for client-side HTTP request debugging, allowing  you to inspect failed requests, outbound headers, payload sizes etc etc.
+   * [tracing/opentracing](tracing/opentracing) - client-side request [Opentracing](http://opentracing.io/) middleware that is tags-aware and supports propagation of traces from server-side middleware
  * Logging
-   * [logging/logrus] - a [Logrus](https://github.com/sirupsen/logrus)-based logger for HTTP calls requests:
+   * [logging/logrus](logging/logrus) - a [Logrus](https://github.com/sirupsen/logrus)-based logger for HTTP calls requests:
       * optionally supports logging of inbound request content and response contents in raw or JSON format
  * Retry
    * [retry](retry) - a simple retry-middleware that retries on connectivity and bad response errors.
