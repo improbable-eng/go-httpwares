@@ -14,20 +14,17 @@ and tracing of requests. This extends to both client-side (Tripperware) and serv
 
 ### Service Tags
 `http_ctxtags` introduces a concept of services for client-side calls. This makes it easy to identify outbound requests
-to both internal and external services. The recommended way to do it is to instantiate a new `http.Client` with a
-different `http_ctx.Tripperware(serviceName)` for external services and then reuse that.
+to both internal and external services.
+
+For calling external services a `http_ctx.Tripperware()` will automatically try to guess the service name from the URL,
+e.g. calling "www.googleapis.com" will yield `googleapis` as service name.
+
+However, for calling internal services, it is recommended to explicitly state the service name by using `WithServiceName("myservice")`
+and reusing that particular client for all subsequent calls.
 
 ### Handler Names and Groups
 For server-side purposes handlers can be named (e.g. "token_exchange") and placed in a group (e.g. "auth"). This allows
 easy organisation of HTTP endpoints for logging and monitoring purposes.
-
-and methods to both server-side and client-side calls. This is to
-make it easy to extract semantic meaning of otherwise opaque RESTful URLs, and make it easy to count such requests.
-
-For client-side calls, the service is either an external name (e.g. "github", "aws") or internal name (e.g. "authserver").
-A method represents the logical operation (e.g. "place_payment").
-
-For server-side calls, the service is a grouping of http.Handlers, and a method is a logical name for an http.Handler.
 
 See `TagFor*` consts below.
 

@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/context"
+	"golang.org/x/net/http2"
 )
 
 var (
@@ -35,8 +36,10 @@ func getTestingCertsPath() string {
 type WaresTestSuite struct {
 	suite.Suite
 
-	ServerMiddleware  []httpwares.Middleware
-	ClientTripperware httpwares.TripperwareChain
+	ClientInLegacyHttp1Mode bool
+	ServerInLegacyHttp1Mode bool
+	ServerMiddleware        []httpwares.Middleware
+	ClientTripperware       httpwares.TripperwareChain
 
 	Handler http.Handler
 
@@ -55,7 +58,9 @@ func (s *WaresTestSuite) SetupSuite() {
 				path.Join(getTestingCertsPath(), "localhost.key"),
 			)
 			require.NoError(s.T(), err, "failed starting TLS config for WaresTestSuite")
-			tlsConf, err = connhelpers.TlsConfigWithHttp2Enabled(tlsConf)
+			if !s.ServerInLegacyHttp1Mode {
+				tlsConf, err = connhelpers.TlsConfigWithHttp2Enabled(tlsConf)
+			}
 			s.ServerListener = tls.NewListener(s.ServerListener, tlsConf)
 		}
 	}
@@ -85,7 +90,7 @@ func (s *WaresTestSuite) SetupSuite() {
 // NewClient returns a client that dials the server for *any* address provided. It's up to you to validate that the
 // scheme is right.
 func (s *WaresTestSuite) NewClient() *http.Client {
-	var transport http.RoundTripper = &http.Transport{
+	var transport = &http.Transport{
 		Dial: func(network, addr string) (net.Conn, error) {
 			return net.Dial(network, s.ServerAddr())
 		},
@@ -93,11 +98,15 @@ func (s *WaresTestSuite) NewClient() *http.Client {
 			InsecureSkipVerify: true,
 		},
 	}
+	if !s.ClientInLegacyHttp1Mode {
+		http2.ConfigureTransport(transport) // make it do http2
+	}
+	var tripper http.RoundTripper = transport
 	if s.ClientTripperware != nil {
-		transport = s.ClientTripperware.Forge(transport)
+		tripper = s.ClientTripperware.Forge(transport)
 	}
 	return &http.Client{
-		Transport: transport,
+		Transport: tripper,
 	}
 }
 
