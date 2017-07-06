@@ -76,7 +76,7 @@ Please see examples and tests for examples of use.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/Sirupsen/logrus](https://godoc.org/github.com/Sirupsen/logrus)
+- [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 - [github.com/mwitkow/go-httpwares](./../..)
 - [github.com/mwitkow/go-httpwares/logging](./..)
 - [github.com/mwitkow/go-httpwares/tags](./../../tags)
