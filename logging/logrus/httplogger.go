@@ -6,7 +6,7 @@ package http_logrus
 import (
 	"log"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // AsHttpLogger returns the given logrus instance as an HTTP logger.
