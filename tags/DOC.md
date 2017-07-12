@@ -41,6 +41,7 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
 - [github.com/pressly/chi](https://godoc.org/github.com/pressly/chi)
 
 ## <a name="pkg-index">Index</a>
+
 * [Constants](#pkg-constants)
 * [Variables](#pkg-variables)
 * [func ChiRouteTagExtractor(req \*http.Request) map[string]interface{}](#ChiRouteTagExtractor)
