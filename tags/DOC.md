@@ -36,7 +36,6 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
 <a href="https://github.com/opentracing/specification/blob/master/semantic_conventions.md">https://github.com/opentracing/specification/blob/master/semantic_conventions.md</a>
 
 ## <a name="pkg-imports">Imported Packages</a>
-
 - [github.com/mwitkow/go-httpwares](./..)
 - [github.com/pressly/chi](https://godoc.org/github.com/pressly/chi)
 
