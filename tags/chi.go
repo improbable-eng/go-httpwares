@@ -15,7 +15,7 @@ import (
 func ChiRouteTagExtractor(req *http.Request) map[string]interface{} {
 	if routeCtx, ok := req.Context().Value(chi.RouteCtxKey).(*chi.Context); ok {
 		val := map[string]interface{}{
-			TagForHandlerName: routeCtx.RoutePattern,
+			TagForHandlerName: routeCtx.RoutePath,
 		}
 		// TODO(bplotka): Find a way to obtain params from chi routeCtx.URLParams (routeParams struct).
 		// Internal keys & values are no longer public, you can only ask for known keys
