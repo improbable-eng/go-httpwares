@@ -1,6 +1,6 @@
 // +build go1.7,!go1.8
 
-package http_retry
+package http_logrus
 
 import (
 	"io"
