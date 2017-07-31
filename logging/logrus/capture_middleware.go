@@ -46,6 +46,10 @@ func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentC
 	}
 }
 
+func headerIsJson(header http.Header) bool {
+	return strings.HasPrefix(strings.ToLower(header.Get("content-type")), "application/json")
+}
+
 func captureMiddlewareRequestContent(req *http.Request, entry *logrus.Entry) error {
 	if req.ContentLength <= 0 || req.Body == nil {
 		// -1 value means that the length cannot be determined, and that it is probably a multipart stremaing call

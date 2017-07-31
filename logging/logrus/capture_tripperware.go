@@ -6,11 +6,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/logging"
+	"github.com/sirupsen/logrus"
 )
 
 // ContentCaptureTripperware is a client-side http ware for logging contents of HTTP requests and responses (body and headers).
@@ -43,20 +42,16 @@ func ContentCaptureTripperware(entry *logrus.Entry, decider http_logging.Content
 	}
 }
 
-func headerIsJson(header http.Header) bool {
-	return strings.HasPrefix(strings.ToLower(header.Get("content-type")), "application/json")
-}
-
 func captureTripperwareRequestContent(req *http.Request, entry *logrus.Entry) error {
 	// All requests created with http.NewRequest will have a GetBody method set, even if the user created
 	// a body manually.
-	if req.GetBody == nil {
+	if getBody(req) == nil {
 		if req.Body != nil {
 			entry.Infof("request body capture skipped, missing GetBody method while Body set")
 		}
 		return nil
 	}
-	bodyReader, err := req.GetBody()
+	bodyReader, err := getBody(req)()
 	if err != nil {
 		return err
 	}
