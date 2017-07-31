@@ -1,3 +1,5 @@
+// +build go1.8
+
 package http_logrus
 
 import (
@@ -41,10 +43,6 @@ func ContentCaptureTripperware(entry *logrus.Entry, decider http_logging.Content
 			return resp, nil
 		})
 	}
-}
-
-func headerIsJson(header http.Header) bool {
-	return strings.HasPrefix(strings.ToLower(header.Get("content-type")), "application/json")
 }
 
 func captureTripperwareRequestContent(req *http.Request, entry *logrus.Entry) error {
