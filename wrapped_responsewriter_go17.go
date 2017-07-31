@@ -26,7 +26,7 @@ func newWrappedResponseWriter(w http.ResponseWriter) WrappedResponseWriter {
 	} else if isCloseNotifier && isFlusher && isHijacker && isReaderFrom { // http.response (http 1.1)
 		return &http1WrappedResponseWriter{wrapped}
 	}
-	return d
+	return wrapped
 }
 
 type http2WrappedResponseWriter struct {
