@@ -122,7 +122,6 @@ func (s *WaresTestSuite) SimpleCtx() context.Context {
 func (s *WaresTestSuite) TearDownSuite() {
 	time.Sleep(10 * time.Millisecond)
 	if s.ServerListener != nil {
-		s.Server.Close()
 		s.ServerListener.Close()
 	}
 }
