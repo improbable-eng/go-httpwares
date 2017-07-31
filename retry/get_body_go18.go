@@ -3,10 +3,10 @@
 package http_retry
 
 import (
-	"net/http"
 	"io"
+	"net/http"
 )
 
-func getBody(r *http.Request) func()(io.ReadCloser, error) {
+func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	return r.GetBody
 }

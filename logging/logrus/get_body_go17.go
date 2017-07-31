@@ -3,17 +3,28 @@
 package http_logrus
 
 import (
+	"bytes"
 	"io"
+	"io/ioutil"
 	"net/http"
-	"reflect"
 )
 
 func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	if r.Body != nil {
-		var clonedBody io.ReadCloser
-		clonedBody = reflect.New(reflect.ValueOf(r.Body).Elem().Type()).Interface().(io.ReadCloser)
+		body, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+		if err != nil {
+			return func() (io.ReadCloser, error) {
+				return nil, err
+			}
+		}
+
+		b := bytes.NewBuffer(body)
+		r.Body = ioutil.NopCloser(b)
+
 		return func() (io.ReadCloser, error) {
-			return clonedBody, nil
+			b := bytes.NewBuffer(body)
+			return ioutil.NopCloser(b), nil
 		}
 	}
 	return nil
