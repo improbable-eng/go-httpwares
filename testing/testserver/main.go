@@ -32,11 +32,12 @@ func main() {
 	logInstance := log.NewEntry(log.StandardLogger())
 	opentracing.SetGlobalTracer(mocktracer.New())
 
-	googleClient := httpwares.TripperwareChain{
+	googleClient := httpwares.WrapClient(
+		http.DefaultClient,
 		http_ctxtags.Tripperware(),
 		http_opentracing.Tripperware(),
 		http_debug.Tripperware(),
-	}.WrapClient(http.DefaultClient)
+	)
 
 	handlerFunc := func(resp http.ResponseWriter, req *http.Request) {
 		resp.WriteHeader(http.StatusOK)

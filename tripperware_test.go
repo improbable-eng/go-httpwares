@@ -27,7 +27,7 @@ func TestTripperwareChainsInFifoOrder(t *testing.T) {
 	numWares := 5
 	retResp := &http.Response{StatusCode: 400}
 	retErr := errors.New("some err")
-	var wares httpwares.TripperwareChain
+	var wares []httpwares.Tripperware
 	for i := 0; i < numWares; i++ {
 		wares = append(wares, assertingTripperware(t, i))
 	}
@@ -38,7 +38,7 @@ func TestTripperwareChainsInFifoOrder(t *testing.T) {
 		return retResp, retErr
 	})
 	req, _ := http.NewRequest("GET", "http://whatever", nil)
-	outResp, outErr := wares.Forge(finalTripper).RoundTrip(req)
+	outResp, outErr := httpwares.WrapClient(&http.Client{Transport: finalTripper}, wares...).Transport.RoundTrip(req)
 	assert.Equal(t, retResp, outResp)
 	assert.Equal(t, retErr, outErr)
 }

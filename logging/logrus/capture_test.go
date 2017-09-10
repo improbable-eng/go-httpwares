@@ -49,7 +49,7 @@ func TestLogrusContentCaptureSuite(t *testing.T) {
 		http_logrus.Middleware(logrus.NewEntry(nullLogger)),
 		http_logrus.ContentCaptureMiddleware(logrus.NewEntry(s.logger), alwaysOnDecider),
 	}
-	s.WaresTestSuite.ClientTripperware = httpwares.TripperwareChain{
+	s.WaresTestSuite.ClientTripperware = []httpwares.Tripperware{
 		http_ctxtags.Tripperware(),
 		http_logrus.ContentCaptureTripperware(logrus.NewEntry(s.logger), alwaysOnDecider),
 	}

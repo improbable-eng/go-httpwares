@@ -12,27 +12,21 @@ func (f RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 // Tripperware is a signature for all http client-side middleware.
 type Tripperware func(http.RoundTripper) http.RoundTripper
 
-// TrpperwareChain is a chain of tripperware before dispatching.
-type TripperwareChain []Tripperware
-
-// Forge takes a chain and finalizes it, attaching it to a final RoundTripper.
-func (chain TripperwareChain) Forge(final http.RoundTripper) http.RoundTripper {
-	next := final
-	for i := len(chain) - 1; i >= 0; i-- {
-		next = chain[i](next)
-	}
-	return next
-}
-
 // WrapClient takes an http.Client and wraps its transport in the chain of tripperwares.
-//
-// If default is not set
-func (chain TripperwareChain) WrapClient(parent *http.Client) *http.Client {
-	copy := *parent
-	finalTransport := parent.Transport
-	if finalTransport == nil { // in case of DefaultTransport
-		finalTransport = http.DefaultTransport
+func WrapClient(client *http.Client, wares ...Tripperware) *http.Client {
+	if len(wares) == 0 {
+		return client
 	}
-	copy.Transport = chain.Forge(finalTransport)
-	return &copy
+
+	transport := client.Transport
+	if transport == nil {
+		transport = http.DefaultTransport
+	}
+	for i := len(wares) - 1; i >= 0; i-- {
+		transport = wares[i](transport)
+	}
+
+	clone := *client
+	clone.Transport = transport
+	return &clone
 }

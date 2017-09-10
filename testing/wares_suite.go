@@ -39,7 +39,7 @@ type WaresTestSuite struct {
 	ClientInLegacyHttp1Mode bool
 	ServerInLegacyHttp1Mode bool
 	ServerMiddleware        []httpwares.Middleware
-	ClientTripperware       httpwares.TripperwareChain
+	ClientTripperware       []httpwares.Tripperware
 
 	Handler http.Handler
 
@@ -101,13 +101,7 @@ func (s *WaresTestSuite) NewClient() *http.Client {
 	if !s.ClientInLegacyHttp1Mode {
 		http2.ConfigureTransport(transport) // make it do http2
 	}
-	var tripper http.RoundTripper = transport
-	if s.ClientTripperware != nil {
-		tripper = s.ClientTripperware.Forge(transport)
-	}
-	return &http.Client{
-		Transport: tripper,
-	}
+	return httpwares.WrapClient(&http.Client{Transport: transport}, s.ClientTripperware...)
 }
 
 func (s *WaresTestSuite) ServerAddr() string {
