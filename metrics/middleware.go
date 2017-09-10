@@ -11,6 +11,9 @@ import (
 )
 
 // Middleware returns a http.Handler middleware that exports request metrics.
+// If the tags middleware is used, this should be placed after tags to pick up metadata.
+// This middleware assumes HTTP/1.x-style requests/response behaviour. It will not work with servers that use
+// hijacking, pushing, or other similar features.
 func Middleware(reporter Reporter) httpwares.Middleware {
 	return func(next http.Handler) http.Handler {
 		if reporter == nil {

@@ -11,6 +11,7 @@ import (
 )
 
 // Tripperware returns a new client-side ware that exports request metrics.
+// If the tags tripperware is used, this should be placed after tags to pick up metadata.
 func Tripperware(reporter Reporter) httpwares.Tripperware {
 	return func(next http.RoundTripper) http.RoundTripper {
 		if reporter == nil {
