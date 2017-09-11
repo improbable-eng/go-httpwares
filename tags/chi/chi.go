@@ -6,8 +6,8 @@ package http_chitags
 import (
 	"net/http"
 
-	"github.com/pressly/chi"
 	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/pressly/chi"
 )
 
 // ChiRouteTagExtractor extracts chi router information and puts them into tags.

@@ -76,10 +76,10 @@ Please see examples and tests for examples of use.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 - [github.com/mwitkow/go-httpwares](./../..)
 - [github.com/mwitkow/go-httpwares/logging](./..)
 - [github.com/mwitkow/go-httpwares/tags](./../../tags)
+- [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 - [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 
 ## <a name="pkg-index">Index</a>
@@ -104,7 +104,7 @@ Please see examples and tests for examples of use.
 * [Extract (WithCustomTags)](#example_Extract_withCustomTags)
 
 #### <a name="pkg-files">Package files</a>
-[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [context.go](./context.go) [doc.go](./doc.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [noop.go](./noop.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
+[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [context.go](./context.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [noop.go](./noop.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
 ## <a name="pkg-variables">Variables</a>
 ``` go
@@ -136,7 +136,7 @@ http.request.body_json (in structured JSON form) and others will be captured as 
 This *must* be used together with http_logrus.Middleware, as it relies on the logger provided there. However, you can
 override the `logrus.Entry` that is used for logging, allowing for logging to a separate backend (e.g. a different file).
 
-## <a name="ContentCaptureTripperware">func</a> [ContentCaptureTripperware](./capture_tripperware.go#L24)
+## <a name="ContentCaptureTripperware">func</a> [ContentCaptureTripperware](./capture_tripperware.go#L23)
 ``` go
 func ContentCaptureTripperware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Tripperware
 ```
@@ -178,25 +178,25 @@ If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. T
 
 ```go
 package http_logrus_test
-	
-	import (
-	    "net/http"
-	
-	    "github.com/mwitkow/go-httpwares/logging/logrus"
-	    "github.com/mwitkow/go-httpwares/tags"
-	)
-	
-	var handler http.HandlerFunc
-	
-	// Simple example of a `http.Handler` extracting the `Middleware`-injected logrus logger from the context.
-	func ExampleExtract_withCustomTags() {
-	    handler = func(resp http.ResponseWriter, req *http.Request) {
-	        // Handlers can add extra tags to `http_ctxtags` that will be set in both the extracted loggers *and*
-	        // the final log statement.
-	        http_ctxtags.ExtractInbound(req).Set("my_custom.my_string", "something").Set("my_custom.my_int", 1337)
-	        http_logrus.Extract(req).Warningf("Hello World")
-	    }
-	}
+
+import (
+    "net/http"
+
+    "github.com/mwitkow/go-httpwares/logging/logrus"
+    "github.com/mwitkow/go-httpwares/tags"
+)
+
+var handler http.HandlerFunc
+
+// Simple example of a `http.Handler` extracting the `Middleware`-injected logrus logger from the context.
+func ExampleExtract_withCustomTags() {
+    handler = func(resp http.ResponseWriter, req *http.Request) {
+        // Handlers can add extra tags to `http_ctxtags` that will be set in both the extracted loggers *and*
+        // the final log statement.
+        http_ctxtags.ExtractInbound(req).Set("my_custom.my_string", "something").Set("my_custom.my_int", 1337)
+        http_logrus.Extract(req).Warningf("Hello World")
+    }
+}
 ```
 
 </details>

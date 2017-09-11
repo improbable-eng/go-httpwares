@@ -8,8 +8,8 @@ import (
 
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
+	"github.com/sirupsen/logrus"
 )
 
 var (

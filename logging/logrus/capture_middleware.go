@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/logging"
+	"github.com/sirupsen/logrus"
 )
 
 // ContentCaptureMiddleware is a server-side http ware for logging contents of HTTP requests and responses (body and headers).
