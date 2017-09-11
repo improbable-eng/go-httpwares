@@ -52,7 +52,7 @@ func (r *testReporter) ResponseStarted(duration time.Duration, status int, heade
 	r.status = status
 }
 
-func (r *testReporter) ResponseDone(duration time.Duration, size int, status int) {
+func (r *testReporter) ResponseDone(duration time.Duration, status int, size int) {
 	r.respdone += 1
 	r.respsize = size
 }

@@ -21,12 +21,9 @@ func Tripperware(reporter Reporter) httpwares.Tripperware {
 			tracker := reporter.Track(req)
 			start := time.Now()
 			tracker.RequestStarted()
-			req.Body = &body{
-				parent: req.Body,
-				done: func(size int) {
-					tracker.RequestRead(time.Since(start), size)
-				},
-			}
+			req.Body = wrapBody(req.Body, func(size int) {
+				tracker.RequestRead(time.Since(start), size)
+			})
 
 			resp, err := next.RoundTrip(req)
 			dur := time.Since(start)
@@ -36,12 +33,9 @@ func Tripperware(reporter Reporter) httpwares.Tripperware {
 				return resp, err
 			}
 			tracker.ResponseStarted(dur, resp.StatusCode, resp.Header)
-			resp.Body = &body{
-				parent: resp.Body,
-				done: func(size int) {
-					tracker.ResponseDone(time.Since(start), size, resp.StatusCode)
-				},
-			}
+			resp.Body = wrapBody(resp.Body, func(size int) {
+				tracker.ResponseDone(time.Since(start), resp.StatusCode, size)
+			})
 			return resp, err
 		})
 	}

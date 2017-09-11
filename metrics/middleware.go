@@ -23,20 +23,14 @@ func Middleware(reporter Reporter) httpwares.Middleware {
 			tracker := reporter.Track(req)
 			start := time.Now()
 			tracker.RequestStarted()
-			req.Body = &body{
-				parent: req.Body,
-				done: func(size int) {
-					tracker.RequestRead(time.Since(start), size)
-				},
-			}
-			wrapped := &writer{
-				parent: resp,
-				started: func(status int) {
-					tracker.ResponseStarted(time.Since(start), status, resp.Header())
-				},
-			}
+			req.Body = wrapBody(req.Body, func(size int) {
+				tracker.RequestRead(time.Since(start), size)
+			})
+			wrapped := wrapWriter(resp, func(status int) {
+				tracker.ResponseStarted(time.Since(start), status, resp.Header())
+			})
 			next.ServeHTTP(wrapped, req)
-			tracker.ResponseDone(time.Since(start), wrapped.size, wrapped.status)
+			tracker.ResponseDone(time.Since(start), wrapped.Status(), wrapped.Size())
 		})
 	}
 }
