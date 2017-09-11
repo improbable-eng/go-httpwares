@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/mwitkow/go-conntrack"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/logging/logrus"
@@ -17,6 +16,7 @@ import (
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/pressly/chi"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context/ctxhttp"
 	_ "golang.org/x/net/trace" // import the debug pages
 )

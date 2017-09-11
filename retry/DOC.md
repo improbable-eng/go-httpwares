@@ -34,7 +34,7 @@ The implementation allow retries after client-side errors or returned error code
 * [type ResponseDiscarderFunc](#ResponseDiscarderFunc)
 
 #### <a name="pkg-files">Package files</a>
-[backoff.go](./backoff.go) [context.go](./context.go) [doc.go](./doc.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
+[backoff.go](./backoff.go) [context.go](./context.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
 ## <a name="DefaultResponseDiscarder">func</a> [DefaultResponseDiscarder](./options.go#L94)
 ``` go

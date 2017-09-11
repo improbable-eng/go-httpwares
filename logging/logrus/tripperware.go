@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/sirupsen/logrus"
 )
 
 // Tripperware is a server-side http ware for logging using logrus.

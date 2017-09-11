@@ -13,18 +13,22 @@
 No packages beyond the Go standard library are imported.
 
 ## <a name="pkg-index">Index</a>
+* [func WrapClient(client \*http.Client, wares ...Tripperware) \*http.Client](#WrapClient)
 * [type Middleware](#Middleware)
 * [type RoundTripperFunc](#RoundTripperFunc)
   * [func (f RoundTripperFunc) RoundTrip(req \*http.Request) (\*http.Response, error)](#RoundTripperFunc.RoundTrip)
 * [type Tripperware](#Tripperware)
-* [type TripperwareChain](#TripperwareChain)
-  * [func (chain TripperwareChain) Forge(final http.RoundTripper) http.RoundTripper](#TripperwareChain.Forge)
-  * [func (chain TripperwareChain) WrapClient(parent \*http.Client) \*http.Client](#TripperwareChain.WrapClient)
 * [type WrappedResponseWriter](#WrappedResponseWriter)
   * [func WrapResponseWriter(w http.ResponseWriter) WrappedResponseWriter](#WrapResponseWriter)
 
 #### <a name="pkg-files">Package files</a>
 [doc.go](./doc.go) [middleware.go](./middleware.go) [tripperware.go](./tripperware.go) [wrapped_responsewriter.go](./wrapped_responsewriter.go) [wrapped_responsewriter_go18.go](./wrapped_responsewriter_go18.go) 
+
+## <a name="WrapClient">func</a> [WrapClient](./tripperware.go#L16)
+``` go
+func WrapClient(client *http.Client, wares ...Tripperware) *http.Client
+```
+WrapClient takes an http.Client and wraps its transport in the chain of tripperwares.
 
 ## <a name="Middleware">type</a> [Middleware](./middleware.go#L6)
 ``` go
@@ -48,26 +52,6 @@ func (f RoundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error)
 type Tripperware func(http.RoundTripper) http.RoundTripper
 ```
 Tripperware is a signature for all http client-side middleware.
-
-## <a name="TripperwareChain">type</a> [TripperwareChain](./tripperware.go#L16)
-``` go
-type TripperwareChain []Tripperware
-```
-TrpperwareChain is a chain of tripperware before dispatching.
-
-### <a name="TripperwareChain.Forge">func</a> (TripperwareChain) [Forge](./tripperware.go#L19)
-``` go
-func (chain TripperwareChain) Forge(final http.RoundTripper) http.RoundTripper
-```
-Forge takes a chain and finalizes it, attaching it to a final RoundTripper.
-
-### <a name="TripperwareChain.WrapClient">func</a> (TripperwareChain) [WrapClient](./tripperware.go#L30)
-``` go
-func (chain TripperwareChain) WrapClient(parent *http.Client) *http.Client
-```
-WrapClient takes an http.Client and wraps its transport in the chain of tripperwares.
-
-If default is not set
 
 ## <a name="WrappedResponseWriter">type</a> [WrappedResponseWriter](./wrapped_responsewriter.go#L19-L32)
 ``` go

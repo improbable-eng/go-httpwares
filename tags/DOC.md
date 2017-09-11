@@ -36,14 +36,12 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
 <a href="https://github.com/opentracing/specification/blob/master/semantic_conventions.md">https://github.com/opentracing/specification/blob/master/semantic_conventions.md</a>
 
 ## <a name="pkg-imports">Imported Packages</a>
+
 - [github.com/mwitkow/go-httpwares](./..)
-- [github.com/pressly/chi](https://godoc.org/github.com/pressly/chi)
 
 ## <a name="pkg-index">Index</a>
-
 * [Constants](#pkg-constants)
 * [Variables](#pkg-variables)
-* [func ChiRouteTagExtractor(req \*http.Request) map[string]interface{}](#ChiRouteTagExtractor)
 * [func DefaultServiceNameDetector(req \*http.Request) string](#DefaultServiceNameDetector)
 * [func HandlerName(handlerName string) httpwares.Middleware](#HandlerName)
 * [func Middleware(handlerGroupName string, opts ...Option) httpwares.Middleware](#Middleware)
@@ -63,7 +61,7 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
   * [func (t \*Tags) Values() map[string]interface{}](#Tags.Values)
 
 #### <a name="pkg-files">Package files</a>
-[chi.go](./chi.go) [context.go](./context.go) [doc.go](./doc.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
+[context.go](./context.go) [doc.go](./doc.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
 ## <a name="pkg-constants">Constants</a>
 ``` go
@@ -84,14 +82,6 @@ var (
     DefaultServiceName = "unspecified"
 )
 ```
-
-## <a name="ChiRouteTagExtractor">func</a> [ChiRouteTagExtractor](./chi.go#L15)
-``` go
-func ChiRouteTagExtractor(req *http.Request) map[string]interface{}
-```
-ChiRouteTagExtractor extracts chi router information and puts them into tags.
-
-By default it will treat the route pattern as the handler name.
 
 ## <a name="DefaultServiceNameDetector">func</a> [DefaultServiceNameDetector](./options.go#L82)
 ``` go

@@ -29,7 +29,7 @@ function goimports_all {
     return $?
 }
 
-go get github.com/davecheney/godoc2md
+go get github.com/devnev/godoc2ghmd
 
 generate_markdown
 goimports_all

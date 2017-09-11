@@ -1,4 +1,3 @@
-
 // Copyright 2017 Michal Witkowski. All Rights Reserved.
 // See LICENSE for licensing terms.
 
@@ -16,10 +15,10 @@ import (
 	"io"
 	"mime/multipart"
 
-	"github.com/sirupsen/logrus"
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/logging/logrus"
 	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
