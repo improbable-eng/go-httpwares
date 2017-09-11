@@ -6,6 +6,7 @@ import (
 
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/mwitkow/go-httpwares/tags/chi"
 	"github.com/mwitkow/go-httpwares/testing"
 	"github.com/pressly/chi"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func TestTaggingSuite(t *testing.T) {
 	chiRouter.Use(
 		http_ctxtags.Middleware(
 			"someservice",
-			http_ctxtags.WithTagExtractor(http_ctxtags.ChiRouteTagExtractor),
+			http_ctxtags.WithTagExtractor(http_chitags.ChiRouteTagExtractor),
 		))
 	chiRouter.Mount("/", &assertingHandler{T: t, serviceName: "someservice"})
 	// This route will check whether the HandlerName passes the right metadata.
