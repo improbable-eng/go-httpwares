@@ -16,7 +16,7 @@ import (
 
 	"github.com/mwitkow/go-conntrack/connhelpers"
 	"github.com/mwitkow/go-httpwares"
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/context"

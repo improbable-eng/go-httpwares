@@ -14,7 +14,7 @@ import (
 	"github.com/mwitkow/go-httpwares/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/mocktracer"
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context/ctxhttp"

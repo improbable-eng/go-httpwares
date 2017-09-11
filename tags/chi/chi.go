@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/mwitkow/go-httpwares/tags"
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 // ChiRouteTagExtractor extracts chi router information and puts them into tags.

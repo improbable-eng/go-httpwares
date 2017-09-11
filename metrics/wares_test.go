@@ -15,7 +15,7 @@ import (
 	"github.com/mwitkow/go-httpwares/metrics"
 	"github.com/mwitkow/go-httpwares/metrics/prometheus"
 	"github.com/mwitkow/go-httpwares/tags"
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
