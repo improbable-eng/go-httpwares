@@ -49,7 +49,7 @@ func TestTaggingSuite(t *testing.T) {
 				http_ctxtags.Middleware("assert_service"),
 				http_opentracing.Middleware(http_opentracing.WithTracer(mockTracer)),
 			},
-			ClientTripperware: httpwares.TripperwareChain{
+			ClientTripperware: []httpwares.Tripperware{
 				http_ctxtags.Tripperware(http_ctxtags.WithServiceName("assert_service")),
 				http_opentracing.Tripperware(http_opentracing.WithTracer(mockTracer)),
 			},
@@ -139,7 +139,7 @@ func (s *OpentracingSuite) TestPropagatesErrors() {
 }
 
 func (s *OpentracingSuite) TestTripperwareHandlesErrors() {
-	client := s.WaresTestSuite.ClientTripperware.WrapClient(http.DefaultClient)
+	client := httpwares.WrapClient(http.DefaultClient, s.WaresTestSuite.ClientTripperware...)
 	ctx := s.createContextFromFakeHttpRequestParent(s.SimpleCtx())
 	req, _ := http.NewRequest("POST", "https://whatever.doesntexist/someurl?code=501", nil)
 	req = req.WithContext(ctx)

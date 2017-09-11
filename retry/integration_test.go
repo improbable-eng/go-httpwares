@@ -81,7 +81,7 @@ func TestRetryTripperwareSuite(t *testing.T) {
 		f: f,
 		WaresTestSuite: &httpwares_testing.WaresTestSuite{
 			Handler: f,
-			ClientTripperware: httpwares.TripperwareChain{
+			ClientTripperware: []httpwares.Tripperware{
 				http_retry.Tripperware(
 					http_retry.WithMax(5),
 					http_retry.WithDecider(requestDeciderForTesting),

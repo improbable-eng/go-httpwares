@@ -35,7 +35,7 @@ func TestLogrusTripperwareSuite(t *testing.T) {
 	s := &logrusTripperwareSuite{newLogrusBaseTestSuite(t)}
 	s.logrusBaseTestSuite.logger.Level = logrus.DebugLevel // most of our log statements are on debug level.
 	// In this suite we have all the Tripperware, but no Middleware.
-	s.WaresTestSuite.ClientTripperware = httpwares.TripperwareChain{
+	s.WaresTestSuite.ClientTripperware = []httpwares.Tripperware{
 		http_ctxtags.Tripperware(),
 		http_logrus.Tripperware(
 			logrus.NewEntry(s.logrusBaseTestSuite.logger),

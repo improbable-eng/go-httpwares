@@ -48,7 +48,7 @@ func TestTaggingSuite(t *testing.T) {
 	s := &TaggingSuite{
 		WaresTestSuite: &httpwares_testing.WaresTestSuite{
 			Handler: chiRouter,
-			ClientTripperware: httpwares.TripperwareChain{
+			ClientTripperware: []httpwares.Tripperware{
 				http_ctxtags.Tripperware(http_ctxtags.WithServiceName("someclientservice")),
 			},
 		},
@@ -76,8 +76,7 @@ func (s *TaggingSuite) TestDefaultTagsAreSet() {
 }
 
 func (s *TaggingSuite) TestCustomTagsAreBeingUsed() {
-	customTrippers := httpwares.TripperwareChain{http_ctxtags.Tripperware(http_ctxtags.WithServiceName("MyServiceCapitalised"))}
-	client := customTrippers.WrapClient(s.NewClient())
+	client := httpwares.WrapClient(s.NewClient(), http_ctxtags.Tripperware(http_ctxtags.WithServiceName("MyServiceCapitalised")))
 	req, _ := http.NewRequest("GET", "https://something.local/myservice/mymethod", nil)
 	resp, err := client.Do(req)
 	require.NoError(s.T(), err, "call shouldn't fail")
