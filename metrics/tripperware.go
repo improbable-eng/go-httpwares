@@ -5,6 +5,7 @@ package http_metrics
 
 import (
 	"net/http"
+	"net/http/httptrace"
 	"time"
 
 	"github.com/mwitkow/go-httpwares"
@@ -21,9 +22,28 @@ func Tripperware(reporter Reporter) httpwares.Tripperware {
 			tracker := reporter.Track(req)
 			start := time.Now()
 			tracker.RequestStarted()
-			req.Body = wrapBody(req.Body, func(size int) {
-				tracker.RequestRead(time.Since(start), size)
-			})
+
+			// If present, wrap body to track number of bytes written
+			reqSize := 0
+			if req.Body != nil {
+				req.Body = wrapBody(req.Body, func(size int) {
+					reqSize = size
+				})
+			}
+
+			// Use httptrace to get notified when writing request completed
+			trace := httptrace.ContextClientTrace(req.Context())
+			if trace == nil {
+				trace = &httptrace.ClientTrace{}
+			}
+			prevWroteRequest := trace.WroteRequest
+			trace.WroteRequest = func(info httptrace.WroteRequestInfo) {
+				tracker.RequestRead(time.Since(start), reqSize)
+				if prevWroteRequest != nil {
+					prevWroteRequest(info)
+				}
+			}
+			req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
 
 			resp, err := next.RoundTrip(req)
 			dur := time.Since(start)
