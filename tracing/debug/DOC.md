@@ -38,7 +38,7 @@ func DefaultIsStatusCodeAnError(statusCode int) bool
 ```
 DefaultIsStatusCodeAnError defines a function that says whether a given request is an error based on a code.
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L19)
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L18)
 ``` go
 func Middleware(opts ...Option) httpwares.Middleware
 ```
@@ -46,7 +46,7 @@ Middleware returns a http.Handler middleware that writes inbound requests to /de
 
 The data logged will be: request headers, request ctxtags, response headers and response length.
 
-## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L18)
+## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L23)
 ``` go
 func Tripperware(opts ...Option) httpwares.Tripperware
 ```

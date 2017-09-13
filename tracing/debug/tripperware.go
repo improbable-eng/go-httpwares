@@ -4,12 +4,17 @@
 package http_debug
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 
 	"github.com/mwitkow/go-httpwares"
 	"github.com/mwitkow/go-httpwares/tags"
 	"golang.org/x/net/trace"
+)
+
+const (
+	headerMaxLength = 100
 )
 
 // Tripperware returns a piece of client-side Tripperware that puts requests on the `/debug/requests` page.
@@ -25,26 +30,20 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			}
 			tr := trace.New(operationNameFromUrl(req), req.URL.String())
 			defer tr.Finish()
+
 			tr.LazyPrintf("%v %v HTTP/%d.%d", req.Method, req.URL, req.ProtoMajor, req.ProtoMinor)
-			tr.LazyPrintf("Host: %v", hostFromReq(req))
-			for k, _ := range req.Header {
-				tr.LazyPrintf("%v: %v", k, req.Header.Get(k))
-			}
-			tr.LazyPrintf("invoking next chain")
+			tr.LazyPrintf("%s", fmtHeaders(req.Header))
+
 			resp, err := next.RoundTrip(req)
-			tr.LazyPrintf("tags: ")
-			for k, v := range http_ctxtags.ExtractInbound(req).Values() {
-				tr.LazyPrintf("%v: %v", k, v)
-			}
+
+			tr.LazyPrintf("%s", fmtTags(http_ctxtags.ExtractInbound(req).Values()))
+
 			if err != nil {
 				tr.LazyPrintf("Error on response: %v", err)
 				tr.SetError()
 			} else {
-				tr.LazyPrintf("HTTP/%d.%d %d %s", resp.ProtoMajor, resp.ProtoMinor, resp.StatusCode, resp.StatusCode)
-				tr.LazyPrintf("Content-Length:  %d", resp.Status, resp.ContentLength)
-				for k, _ := range resp.Header {
-					tr.LazyPrintf("%v: %v", k, resp.Header.Get(k))
-				}
+				tr.LazyPrintf("HTTP/%d.%d %d %s", resp.ProtoMajor, resp.ProtoMinor, resp.StatusCode, resp.Status)
+				tr.LazyPrintf("%s", fmtHeaders(resp.Header))
 				if o.statusCodeErrorFunc(resp.StatusCode) {
 					tr.SetError()
 				}
@@ -60,4 +59,37 @@ func operationNameFromUrl(req *http.Request) string {
 		return fmt.Sprintf("%v.%s", vals[http_ctxtags.TagForCallService], req.Method)
 	}
 	return fmt.Sprintf("%s%s", req.URL.Host, req.URL.Path)
+}
+
+func fmtTags(t map[string]interface{}) *bytes.Buffer {
+	var b bytes.Buffer
+	b.WriteString("tags:")
+	for k, v := range t {
+		fmt.Fprintf(&b, " %v=%q", k, v)
+	}
+	return &b
+}
+
+func fmtHeaders(h http.Header) *bytes.Buffer {
+	var buf bytes.Buffer
+	for k := range h {
+		v := h.Get(k)
+		l := buf.Len()
+		if len(k) > headerMaxLength {
+			k = k[:headerMaxLength]
+		}
+		if len(v) > headerMaxLength {
+			v = v[:headerMaxLength]
+		}
+		fmt.Fprintf(&buf, "%v: %v", k, v)
+		if buf.Len() > l+headerMaxLength {
+			buf.Truncate(l + headerMaxLength)
+			fmt.Fprint(&buf, " (header truncated)")
+		}
+		buf.WriteByte('\n')
+	}
+	if buf.Len() > 0 {
+		buf.Truncate(buf.Len() - 1)
+	}
+	return &buf
 }
