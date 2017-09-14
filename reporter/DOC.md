@@ -16,7 +16,7 @@ detail is included using options to these reporters.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./..)
+- [github.com/mwitkow/go-httpwares](../)
 
 ## <a name="pkg-index">Index</a>
 * [func Middleware(reporter Reporter) httpwares.Middleware](#Middleware)
@@ -29,9 +29,9 @@ detail is included using options to these reporters.
 * [Tripperware](#example_Tripperware)
 
 #### <a name="pkg-files">Package files</a>
-[doc.go](./doc.go) [middleware.go](./middleware.go) [reporter.go](./reporter.go) [tripperware.go](./tripperware.go) [wrapped_body.go](./wrapped_body.go) [wrapped_writer.go](./wrapped_writer.go) 
+[doc.go](./doc.go) [middleware.go](middleware.go) [reporter.go](reporter.go) [tripperware.go](tripperware.go) [wrapped_body.go](wrapped_body.go) [wrapped_writer.go](wrapped_writer.go) 
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L17)
+## <a name="Middleware">func</a> [Middleware](middleware.go#L17)
 ``` go
 func Middleware(reporter Reporter) httpwares.Middleware
 ```
@@ -57,7 +57,7 @@ http.ListenAndServe(":8888", r)
 
 </details>
 
-## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L15)
+## <a name="Tripperware">func</a> [Tripperware](tripperware.go#L15)
 ``` go
 func Tripperware(reporter Reporter) httpwares.Tripperware
 ```
@@ -80,7 +80,7 @@ c.Get("example.org/foo")
 
 </details>
 
-## <a name="Reporter">type</a> [Reporter](./reporter.go#L12-L15)
+## <a name="Reporter">type</a> [Reporter](reporter.go#L12-L15)
 ``` go
 type Reporter interface {
     // Start tracking a new request.
@@ -89,7 +89,7 @@ type Reporter interface {
 ```
 Called when a new request is to be tracked.
 
-## <a name="Tracker">type</a> [Tracker](./reporter.go#L18-L35)
+## <a name="Tracker">type</a> [Tracker](reporter.go#L18-L35)
 ``` go
 type Tracker interface {
     // The exchange has started. This is called immediately after Reporter.Track.

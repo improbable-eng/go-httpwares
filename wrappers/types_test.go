@@ -1,7 +1,7 @@
 // Copyright 2017 Mark Nevill. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package http_metrics
+package http_wrappers
 
 import (
 	"io"

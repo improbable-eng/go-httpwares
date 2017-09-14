@@ -1,13 +1,14 @@
 // Copyright 2017 Mark Nevill. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package http_metrics
+package http_reporter
 
 import (
 	"net/http"
 	"time"
 
 	"github.com/mwitkow/go-httpwares"
+	"github.com/mwitkow/go-httpwares/wrappers"
 )
 
 // Middleware returns a http.Handler middleware that exports request metrics.
@@ -23,10 +24,10 @@ func Middleware(reporter Reporter) httpwares.Middleware {
 			tracker := reporter.Track(req)
 			start := time.Now()
 			tracker.RequestStarted()
-			req.Body = wrapBody(req.Body, func(size int) {
+			req.Body = http_wrappers.WrapBody(req.Body, func(size int) {
 				tracker.RequestRead(time.Since(start), size)
 			})
-			wrapped := wrapWriter(resp, func(status int) {
+			wrapped := http_wrappers.WrapWriter(resp, func(status int) {
 				tracker.ResponseStarted(time.Since(start), status, resp.Header())
 			})
 			next.ServeHTTP(wrapped, req)

@@ -1,7 +1,7 @@
 // Copyright 2017 Mark Nevill. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package http_metrics
+package http_wrappers
 
 import (
 	"io"
@@ -14,7 +14,7 @@ type wrappedWriter interface {
 	Size() int
 }
 
-func wrapWriter(w http.ResponseWriter, started func(int)) wrappedWriter {
+func WrapWriter(w http.ResponseWriter, started func(int)) wrappedWriter {
 	wrapped := &writer{
 		parent:  w,
 		started: started,

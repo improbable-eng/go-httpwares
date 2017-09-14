@@ -1,7 +1,7 @@
 // Copyright 2017 Mark Nevill. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package http_metrics
+package http_reporter
 
 import (
 	"net/http"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/mwitkow/go-httpwares"
+	"github.com/mwitkow/go-httpwares/wrappers"
 )
 
 // Tripperware returns a new client-side ware that exports request metrics.
@@ -26,7 +27,7 @@ func Tripperware(reporter Reporter) httpwares.Tripperware {
 			// If present, wrap body to track number of bytes written
 			reqSize := 0
 			if req.Body != nil {
-				req.Body = wrapBody(req.Body, func(size int) {
+				req.Body = http_wrappers.WrapBody(req.Body, func(size int) {
 					reqSize = size
 				})
 			}
@@ -53,7 +54,7 @@ func Tripperware(reporter Reporter) httpwares.Tripperware {
 				return resp, err
 			}
 			tracker.ResponseStarted(dur, resp.StatusCode, resp.Header)
-			resp.Body = wrapBody(resp.Body, func(size int) {
+			resp.Body = http_wrappers.WrapBody(resp.Body, func(size int) {
 				tracker.ResponseDone(time.Since(start), resp.StatusCode, size)
 			})
 			return resp, err
