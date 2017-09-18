@@ -1,5 +1,5 @@
-# http_metrics
-`import "github.com/mwitkow/go-httpwares/metrics"`
+# http_reporter
+`import "github.com/mwitkow/go-httpwares/reporter"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -7,12 +7,16 @@
 * [Examples](#pkg-examples)
 
 ## <a name="pkg-overview">Overview</a>
-`http_metrics` provides client and server side reporting of HTTP stats.
+`reporter` provides client and server side reporting of HTTP request and response for stats.
 
 The middleware (server-side) or tripperware (client-side) must be given a reporter to record the stats for each request.
 
-Prometheus-based reporter implementations for client and server metrics are included. The user may choose what level of
-detail is included using options to these reporters.
+Example implementations:
+
+"github.com/mwitkow/go-httpwares/metrics/prometheus":
+
+	Prometheus-based reporter implementations for client and server metrics. The user may choose what level of
+	detail is included using options to these reporters.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
@@ -35,10 +39,10 @@ detail is included using options to these reporters.
 ``` go
 func Middleware(reporter Reporter) httpwares.Middleware
 ```
-Middleware returns a http.Handler middleware that exports request metrics.
+Middleware returns a http.Handler middleware that set up reporter callbacks.
 If the tags middleware is used, this should be placed after tags to pick up metadata.
 This middleware assumes HTTP/1.x-style requests/response behaviour. It will not work with servers that use
-hijacking, pushing, or other similar features.
+hijacking, pushing, or other similar features. (TODO)
 
 #### Example:
 
@@ -48,7 +52,7 @@ hijacking, pushing, or other similar features.
 ```go
 r := chi.NewRouter()
 r.Use(http_ctxtags.Middleware("default"))
-r.Use(http_metrics.Middleware(http_prometheus.ServerMetrics(http_prometheus.WithLatency())))
+r.Use(http_prometheus.Middleware(http_prometheus.WithLatency()))
 r.Get("/", func(w http.ResponseWriter, r *http.Request) {
     w.WriteHeader(200)
 })
@@ -57,11 +61,11 @@ http.ListenAndServe(":8888", r)
 
 </details>
 
-## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L15)
+## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L16)
 ``` go
 func Tripperware(reporter Reporter) httpwares.Tripperware
 ```
-Tripperware returns a new client-side ware that exports request metrics.
+Tripperware returns a new client-side ware that have reporter callbacks set up.
 If the tags tripperware is used, this should be placed after tags to pick up metadata.
 
 #### Example:
@@ -73,7 +77,7 @@ If the tags tripperware is used, this should be placed after tags to pick up met
 c := httpwares.WrapClient(
     http.DefaultClient,
     http_ctxtags.Tripperware(),
-    http_metrics.Tripperware(http_prometheus.ClientMetrics(http_prometheus.WithName("testclient"))),
+    http_prometheus.Tripperware(http_prometheus.WithName("testclient")),
 )
 c.Get("example.org/foo")
 ```

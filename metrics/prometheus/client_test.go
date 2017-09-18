@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/metrics"
 	"github.com/mwitkow/go-httpwares/metrics/prometheus"
 	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/prometheus/client_golang/prometheus"
@@ -51,7 +50,7 @@ func TestPrometheusClientMetricLables(t *testing.T) {
 				return next.RoundTrip(req)
 			})
 		},
-		http_metrics.Tripperware(http_prometheus.ClientMetrics()),
+		http_prometheus.Tripperware(),
 	)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
