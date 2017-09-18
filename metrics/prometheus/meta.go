@@ -14,7 +14,7 @@ type meta struct {
 }
 
 func reqMeta(req *http.Request, opts *options, inbound bool) *meta {
-	m := &meta{name: opts.name}
+	m := &meta{name: opts.name, method: req.Method}
 
 	var tags map[string]interface{}
 	if inbound {
