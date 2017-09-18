@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mwitkow/go-httpwares/metrics"
+	"github.com/mwitkow/go-httpwares/reporter"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -58,7 +58,7 @@ var (
 	clientSizeInit sync.Once
 )
 
-func ClientMetrics(opts ...opt) http_metrics.Reporter {
+func ClientMetrics(opts ...opt) http_reporter.Reporter {
 	o := evalOpts(opts)
 	clientInit.Do(func() {
 		prometheus.MustRegister(clientStarted)
@@ -82,7 +82,7 @@ type clientReporter struct {
 	opts *options
 }
 
-func (r *clientReporter) Track(req *http.Request) http_metrics.Tracker {
+func (r *clientReporter) Track(req *http.Request) http_reporter.Tracker {
 	return &clientTracker{
 		opts: r.opts,
 		meta: reqMeta(req, r.opts, false),

@@ -1,11 +1,11 @@
 // Copyright 2017 Mark Nevill. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package http_metrics
+package http_wrappers
 
 import "io"
 
-func wrapBody(rc io.ReadCloser, done func(int)) io.ReadCloser {
+func WrapBody(rc io.ReadCloser, done func(int)) io.ReadCloser {
 	wrapped := &body{
 		parent: rc,
 		done:   done,
