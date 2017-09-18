@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/metrics/prometheus"
+	"github.com/mwitkow/go-httpwares/prometheus"
 	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_model/go"

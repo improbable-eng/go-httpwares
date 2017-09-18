@@ -1,5 +1,5 @@
 # http_prometheus
-`import "github.com/mwitkow/go-httpwares/metrics/prometheus"`
+`import "github.com/mwitkow/go-httpwares/prometheus"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -11,9 +11,9 @@ The user may choose what level of detail is included using options to these repo
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./../..)
-- [github.com/mwitkow/go-httpwares/reporter](./../../reporter)
-- [github.com/mwitkow/go-httpwares/tags](./../../tags)
+- [github.com/mwitkow/go-httpwares](./..)
+- [github.com/mwitkow/go-httpwares/reporter](./../reporter)
+- [github.com/mwitkow/go-httpwares/tags](./../tags)
 - [github.com/prometheus/client_golang/prometheus](https://godoc.org/github.com/prometheus/client_golang/prometheus)
 
 ## <a name="pkg-index">Index</a>

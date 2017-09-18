@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/metrics/prometheus"
+	"github.com/mwitkow/go-httpwares/prometheus"
 	"github.com/mwitkow/go-httpwares/reporter"
 	"github.com/mwitkow/go-httpwares/tags"
 	"github.com/stretchr/testify/assert"
