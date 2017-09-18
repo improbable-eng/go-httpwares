@@ -38,12 +38,11 @@ If the tags middleware is used, this should be placed after tags to pick up meta
 This middleware assumes HTTP/1.x-style requests/response behaviour. It will not work with servers that use
 hijacking, pushing, or other similar features.
 
-## <a name="Tripperware">func</a> [Tripperware](./client.go#L85)
+## <a name="Tripperware">func</a> [Tripperware](./client.go#L84)
 ``` go
 func Tripperware(opts ...opt) httpwares.Tripperware
 ```
 Tripperware returns a new client-side ware that exports request metrics.
-It is using Reporter Tripperware with Prometheus Client Metrics Reporter.
 If the tags tripperware is used, this should be placed after tags to pick up metadata.
 
 ## <a name="WithHostLabel">func</a> [WithHostLabel](./options.go#L36)

@@ -80,7 +80,6 @@ func clientMetrics(opts ...opt) http_reporter.Reporter {
 }
 
 // Tripperware returns a new client-side ware that exports request metrics.
-// It is using Reporter Tripperware with Prometheus Client Metrics Reporter.
 // If the tags tripperware is used, this should be placed after tags to pick up metadata.
 func Tripperware(opts ...opt) httpwares.Tripperware {
 	return http_reporter.Tripperware(clientMetrics(opts...))

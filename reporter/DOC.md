@@ -7,12 +7,10 @@
 * [Examples](#pkg-examples)
 
 ## <a name="pkg-overview">Overview</a>
-`reporter` provides client and server side reporting of HTTP request and response for stats.
-
-The middleware (server-side) or tripperware (client-side) must be given a reporter to record the stats for each request.
+`reporter` provides a way to listen on particular HTTP request and response events.
+It also provides the reporter middleware (server-side) or tripperware (client-side) that sets up all callbacks in place.
 
 Example implementations:
-
 "github.com/mwitkow/go-httpwares/metrics/prometheus":
 
 	Prometheus-based reporter implementations for client and server metrics. The user may choose what level of
@@ -35,14 +33,13 @@ Example implementations:
 #### <a name="pkg-files">Package files</a>
 [doc.go](./doc.go) [middleware.go](./middleware.go) [reporter.go](./reporter.go) [tripperware.go](./tripperware.go) [wrapped_body.go](./wrapped_body.go) [wrapped_writer.go](./wrapped_writer.go) 
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L17)
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L16)
 ``` go
 func Middleware(reporter Reporter) httpwares.Middleware
 ```
-Middleware returns a http.Handler middleware that set up reporter callbacks.
-If the tags middleware is used, this should be placed after tags to pick up metadata.
+Middleware returns a http.Handler middleware that sets up reporter callbacks.
 This middleware assumes HTTP/1.x-style requests/response behaviour. It will not work with servers that use
-hijacking, pushing, or other similar features. (TODO)
+hijacking, pushing, or other similar features.
 
 #### Example:
 
@@ -61,12 +58,11 @@ http.ListenAndServe(":8888", r)
 
 </details>
 
-## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L16)
+## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L15)
 ``` go
 func Tripperware(reporter Reporter) httpwares.Tripperware
 ```
-Tripperware returns a new client-side ware that have reporter callbacks set up.
-If the tags tripperware is used, this should be placed after tags to pick up metadata.
+Tripperware returns a new client-side ware that has reporter callbacks set up.
 
 #### Example:
 
