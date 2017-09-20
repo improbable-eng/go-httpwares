@@ -20,6 +20,7 @@ var (
 
 type options struct {
 	levelFunc                 CodeToLevel
+	wrapLevelFromReqFunc      RequestToLevel
 	levelForConnectivityError logrus.Level
 	requestCaptureFunc        func(r *http.Request) bool
 	responseCaptureFunc       func(r *http.Request, status int) bool
@@ -54,9 +55,25 @@ type CodeToLevel func(httpStatusCode int) logrus.Level
 //
 // By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware, and `DefaultTripperwareCodeToLevel`
 // is used for client-side tripperware.
+//
+// Note that this option can be overwritten by WithRequestLevels option if it is set as well.
 func WithLevels(f CodeToLevel) Option {
 	return func(o *options) {
 		o.levelFunc = f
+	}
+}
+
+// RequestToLevel user functions define the mapping between so far figured level and observed request details to logrus log levels.
+type RequestToLevel func(level logrus.Level, req *http.Request) logrus.Level
+
+// WithRequestLevels customizes the function that maps HTTP server side request to log levels.
+//
+// This is only supported by middleware.
+//
+// By default CodeToLevel option is used. If RequestToLevel function is set it will be invoked after CodeToLevel.
+func WithRequestLevels(f RequestToLevel) Option {
+	return func(o *options) {
+		o.wrapLevelFromReqFunc = f
 	}
 }
 

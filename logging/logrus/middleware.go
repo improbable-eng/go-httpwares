@@ -41,7 +41,11 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 				"http.status":  wrappedResp.StatusCode(),
 				"http.time_ms": timeDiffToMilliseconds(startTime),
 			}
+
 			level := o.levelFunc(wrappedResp.StatusCode())
+			if o.wrapLevelFromReqFunc != nil {
+				level = o.wrapLevelFromReqFunc(level, newReq)
+			}
 			levelLogf(
 				Extract(newReq).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
