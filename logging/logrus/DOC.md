@@ -98,13 +98,15 @@ Please see examples and tests for examples of use.
   * [func WithConnectivityErrorLevel(level logrus.Level) Option](#WithConnectivityErrorLevel)
   * [func WithLevels(f CodeToLevel) Option](#WithLevels)
   * [func WithRequestBodyCapture(deciderFunc func(r \*http.Request) bool) Option](#WithRequestBodyCapture)
+  * [func WithRequestLevels(f RequestToLevel) Option](#WithRequestLevels)
   * [func WithResponseBodyCapture(deciderFunc func(r \*http.Request, status int) bool) Option](#WithResponseBodyCapture)
+* [type RequestToLevel](#RequestToLevel)
 
 #### <a name="pkg-examples">Examples</a>
 * [Extract (WithCustomTags)](#example_Extract_withCustomTags)
 
 #### <a name="pkg-files">Package files</a>
-[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [context.go](./context.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [noop.go](./noop.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
+[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [context.go](./context.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [newnew.go](./newnew.go) [noop.go](./noop.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
 ## <a name="pkg-variables">Variables</a>
 ``` go
@@ -149,13 +151,13 @@ The body will be recorded as a separate log message. Body of `application/json` 
 http.request.body_json (in structured JSON form) and others will be captured as http.request.body_raw logrus field
 (raw base64-encoded value).
 
-## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L102)
+## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L119)
 ``` go
 func DefaultMiddlewareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultMiddlewareCodeToLevel is the default of a mapper between HTTP server-side status codes and logrus log levels.
 
-## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L115)
+## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L132)
 ``` go
 func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
 ```
@@ -228,24 +230,24 @@ Tripperware is a server-side http ware for logging using logrus.
 This tripperware *does not* propagate a context-based logger, but act as a logger of requests.
 This includes logging of errors.
 
-## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L51)
+## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L52)
 ``` go
 type CodeToLevel func(httpStatusCode int) logrus.Level
 ```
 CodeToLevel user functions define the mapping between HTTP status codes and logrus log levels.
 
-## <a name="Option">type</a> [Option](./options.go#L48)
+## <a name="Option">type</a> [Option](./options.go#L49)
 ``` go
 type Option func(*options)
 ```
 
-### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L64)
+### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L81)
 ``` go
 func WithConnectivityErrorLevel(level logrus.Level) Option
 ```
 WithConnectivityErrorLevel customizes
 
-### <a name="WithLevels">func</a> [WithLevels](./options.go#L57)
+### <a name="WithLevels">func</a> [WithLevels](./options.go#L60)
 ``` go
 func WithLevels(f CodeToLevel) Option
 ```
@@ -254,7 +256,9 @@ WithLevels customizes the function that maps HTTP client or server side status c
 By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware, and `DefaultTripperwareCodeToLevel`
 is used for client-side tripperware.
 
-### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L82)
+Note that this option can be overwritten by WithRequestLevels option if it is set as well.
+
+### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L99)
 ``` go
 func WithRequestBodyCapture(deciderFunc func(r *http.Request) bool) Option
 ```
@@ -271,7 +275,17 @@ For middleware, only requests with a set Content-Length will be captured, with n
 
 This option creates a copy of the body per request, so please use with care.
 
-### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L95)
+### <a name="WithRequestLevels">func</a> [WithRequestLevels](./options.go#L74)
+``` go
+func WithRequestLevels(f RequestToLevel) Option
+```
+WithRequestLevels customizes the function that maps HTTP server side request to log levels.
+
+This is only supported by middleware.
+
+By default CodeToLevel option is used. If RequestToLevel function is set it will be invoked after CodeToLevel.
+
+### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L112)
 ``` go
 func WithResponseBodyCapture(deciderFunc func(r *http.Request, status int) bool) Option
 ```
@@ -282,6 +296,12 @@ http.response.body_json (in structured JSON form) and others will be captured as
 (raw base64-encoded value).
 
 Only responses with Content-Length will be captured, with non-default Transfer-Encoding not being supported.
+
+## <a name="RequestToLevel">type</a> [RequestToLevel](./options.go#L67)
+``` go
+type RequestToLevel func(level logrus.Level, req *http.Request) logrus.Level
+```
+RequestToLevel user functions define the mapping between so far figured level and observed request details to logrus log levels.
 
 - - -
 Generated by [godoc2ghmd](https://github.com/GandalfUK/godoc2ghmd)
