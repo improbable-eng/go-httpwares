@@ -63,6 +63,7 @@ func (w *wrappedResponseWriter) WriteHeader(code int) {
 		}
 	}
 }
+
 func (w *wrappedResponseWriter) Write(buf []byte) (int, error) {
 	w.WriteHeader(http.StatusOK) // double writes are ignored.
 	n, err := w.ResponseWriter.Write(buf)
@@ -76,6 +77,19 @@ func (w *wrappedResponseWriter) Write(buf []byte) (int, error) {
 func (w *wrappedResponseWriter) StatusCode() int {
 	return w.code
 }
+
 func (w *wrappedResponseWriter) MessageLength() int {
 	return w.bytes
+}
+
+func (w *wrappedResponseWriter) CloseNotify() <-chan bool {
+	if x, ok := w.ResponseWriter.(http.CloseNotifier); ok {
+		return x.CloseNotify()
+	} else {
+		return make(chan bool, 1)
+	}
+}
+
+func (w *wrappedResponseWriter) Flush() {
+	w.ResponseWriter.(http.Flusher).Flush()
 }
