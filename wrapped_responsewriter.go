@@ -83,11 +83,7 @@ func (w *wrappedResponseWriter) MessageLength() int {
 }
 
 func (w *wrappedResponseWriter) CloseNotify() <-chan bool {
-	if x, ok := w.ResponseWriter.(http.CloseNotifier); ok {
-		return x.CloseNotify()
-	} else {
-		return make(chan bool, 1)
-	}
+	return w.ResponseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 func (w *wrappedResponseWriter) Flush() {
