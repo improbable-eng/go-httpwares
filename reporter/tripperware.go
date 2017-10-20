@@ -1,7 +1,7 @@
 // Copyright 2017 Mark Nevill. All Rights Reserved.
 // See LICENSE for licensing terms.
 
-package http_metrics
+package http_reporter
 
 import (
 	"net/http"
@@ -11,8 +11,7 @@ import (
 	"github.com/mwitkow/go-httpwares"
 )
 
-// Tripperware returns a new client-side ware that exports request metrics.
-// If the tags tripperware is used, this should be placed after tags to pick up metadata.
+// Tripperware returns a new client-side ware that has reporter callbacks set up.
 func Tripperware(reporter Reporter) httpwares.Tripperware {
 	return func(next http.RoundTripper) http.RoundTripper {
 		if reporter == nil {

@@ -4,13 +4,13 @@
 package http_prometheus
 
 import (
-	"sync"
-
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
-	"github.com/mwitkow/go-httpwares/metrics"
+	"github.com/mwitkow/go-httpwares"
+	"github.com/mwitkow/go-httpwares/reporter"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -59,7 +59,7 @@ var (
 	serverSizeInit sync.Once
 )
 
-func ServerMetrics(opts ...opt) http_metrics.Reporter {
+func serverMetrics(opts ...opt) http_reporter.Reporter {
 	o := evalOpts(opts)
 	serverInit.Do(func() {
 		prometheus.MustRegister(serverStarted)
@@ -79,11 +79,20 @@ func ServerMetrics(opts ...opt) http_metrics.Reporter {
 	return &serverReporter{opts: o}
 }
 
+// Middleware returns a http.Handler middleware that exports request metrics.
+// It is using Reporter Middleware with Prometheus Server Metrics Reporter.
+// If the tags middleware is used, this should be placed after tags to pick up metadata.
+// This middleware assumes HTTP/1.x-style requests/response behaviour. It will not work with servers that use
+// hijacking, pushing, or other similar features.
+func Middleware(opts ...opt) httpwares.Middleware {
+	return http_reporter.Middleware(serverMetrics(opts...))
+}
+
 type serverReporter struct {
 	opts *options
 }
 
-func (r *serverReporter) Track(req *http.Request) http_metrics.Tracker {
+func (r *serverReporter) Track(req *http.Request) http_reporter.Tracker {
 	return &serverTracker{
 		opts: r.opts,
 		meta: reqMeta(req, r.opts, true),

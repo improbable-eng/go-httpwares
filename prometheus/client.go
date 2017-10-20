@@ -9,7 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mwitkow/go-httpwares/metrics"
+	"github.com/mwitkow/go-httpwares"
+	"github.com/mwitkow/go-httpwares/reporter"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -58,7 +59,7 @@ var (
 	clientSizeInit sync.Once
 )
 
-func ClientMetrics(opts ...opt) http_metrics.Reporter {
+func clientMetrics(opts ...opt) http_reporter.Reporter {
 	o := evalOpts(opts)
 	clientInit.Do(func() {
 		prometheus.MustRegister(clientStarted)
@@ -78,11 +79,17 @@ func ClientMetrics(opts ...opt) http_metrics.Reporter {
 	return &clientReporter{opts: o}
 }
 
+// Tripperware returns a new client-side ware that exports request metrics.
+// If the tags tripperware is used, this should be placed after tags to pick up metadata.
+func Tripperware(opts ...opt) httpwares.Tripperware {
+	return http_reporter.Tripperware(clientMetrics(opts...))
+}
+
 type clientReporter struct {
 	opts *options
 }
 
-func (r *clientReporter) Track(req *http.Request) http_metrics.Tracker {
+func (r *clientReporter) Track(req *http.Request) http_reporter.Tracker {
 	return &clientTracker{
 		opts: r.opts,
 		meta: reqMeta(req, r.opts, false),
