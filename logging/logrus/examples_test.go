@@ -3,8 +3,8 @@ package http_logrus_test
 import (
 	"net/http"
 
-	"github.com/mwitkow/go-httpwares/logging/logrus"
-	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares/logging/logrus"
+	"github.com/improbable-eng/go-httpwares/tags"
 )
 
 var handler http.HandlerFunc

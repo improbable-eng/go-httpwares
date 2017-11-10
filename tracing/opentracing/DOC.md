@@ -1,5 +1,5 @@
 # http_opentracing
-`import "github.com/mwitkow/go-httpwares/tracing/opentracing"`
+`import "github.com/improbable-eng/go-httpwares/tracing/opentracing"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -23,8 +23,8 @@ For more information see:
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./../..)
-- [github.com/mwitkow/go-httpwares/tags](./../../tags)
+- [github.com/improbable-eng/go-httpwares](./../..)
+- [github.com/improbable-eng/go-httpwares/tags](./../../tags)
 - [github.com/opentracing/opentracing-go](https://godoc.org/github.com/opentracing/opentracing-go)
 - [github.com/opentracing/opentracing-go/ext](https://godoc.org/github.com/opentracing/opentracing-go/ext)
 - [github.com/opentracing/opentracing-go/log](https://godoc.org/github.com/opentracing/opentracing-go/log)

@@ -6,7 +6,7 @@ package http_prometheus
 import (
 	"net/http"
 
-	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares/tags"
 )
 
 type meta struct {

@@ -1,5 +1,5 @@
 # http_retry
-`import "github.com/mwitkow/go-httpwares/retry"`
+`import "github.com/improbable-eng/go-httpwares/retry"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -14,7 +14,7 @@ The implementation allow retries after client-side errors or returned error code
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./..)
+- [github.com/improbable-eng/go-httpwares](./..)
 - [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 
 ## <a name="pkg-index">Index</a>

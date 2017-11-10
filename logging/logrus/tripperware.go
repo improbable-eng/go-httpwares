@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares"
+	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 )
 

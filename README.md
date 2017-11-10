@@ -1,10 +1,10 @@
 # :stew: Go HTTP Wares 
 
-[![Travis Build](https://travis-ci.org/mwitkow/go-httpwares.svg?branch=master)](https://travis-ci.org/mwitkow/go-httpwares)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mwitkow/go-httpwares)](https://goreportcard.com/report/github.com/mwitkow/go-httpwares)
-[![GoDoc](http://img.shields.io/badge/GoDoc-Reference-blue.svg)](https://godoc.org/github.com/mwitkow/go-httpwares)
-[![SourceGraph](https://sourcegraph.com/github.com/mwitkow/go-httpwares/-/badge.svg)](https://sourcegraph.com/github.com/mwitkow/go-httpwares/?badge)
-[![codecov](https://codecov.io/gh/mwitkow/go-httpwares/branch/master/graph/badge.svg)](https://codecov.io/gh/mwitkow/go-httpwares)
+[![Travis Build](https://travis-ci.org/improbable-eng/go-httpwares.svg?branch=master)](https://travis-ci.org/improbable-eng/go-httpwares)
+[![Go Report Card](https://goreportcard.com/badge/github.com/improbable-eng/go-httpwares)](https://goreportcard.com/report/github.com/improbable-eng/go-httpwares)
+[![GoDoc](http://img.shields.io/badge/GoDoc-Reference-blue.svg)](https://godoc.org/github.com/improbable-eng/go-httpwares)
+[![SourceGraph](https://sourcegraph.com/github.com/improbable-eng/go-httpwares/-/badge.svg)](https://sourcegraph.com/github.com/improbable-eng/go-httpwares/?badge)
+[![codecov](https://codecov.io/gh/improbable-eng/go-httpwares/branch/master/graph/badge.svg)](https://codecov.io/gh/improbable-eng/go-httpwares)
 [![Apache 2.0 License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![quality: alpha](https://img.shields.io/badge/quality-alpha-orange.svg)](#status)
 

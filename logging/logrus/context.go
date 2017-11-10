@@ -6,7 +6,7 @@ package http_logrus
 import (
 	"net/http"
 
-	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )

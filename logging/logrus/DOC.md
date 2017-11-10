@@ -1,5 +1,5 @@
 # http_logrus
-`import "github.com/mwitkow/go-httpwares/logging/logrus"`
+`import "github.com/improbable-eng/go-httpwares/logging/logrus"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -76,9 +76,9 @@ Please see examples and tests for examples of use.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./../..)
-- [github.com/mwitkow/go-httpwares/logging](./..)
-- [github.com/mwitkow/go-httpwares/tags](./../../tags)
+- [github.com/improbable-eng/go-httpwares](./../..)
+- [github.com/improbable-eng/go-httpwares/logging](./..)
+- [github.com/improbable-eng/go-httpwares/tags](./../../tags)
 - [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 - [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 
@@ -182,8 +182,8 @@ package http_logrus_test
 import (
     "net/http"
 
-    "github.com/mwitkow/go-httpwares/logging/logrus"
-    "github.com/mwitkow/go-httpwares/tags"
+    "github.com/improbable-eng/go-httpwares/logging/logrus"
+    "github.com/improbable-eng/go-httpwares/tags"
 )
 
 var handler http.HandlerFunc

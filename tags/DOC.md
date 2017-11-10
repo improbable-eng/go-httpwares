@@ -1,5 +1,5 @@
 # http_ctxtags
-`import "github.com/mwitkow/go-httpwares/tags"`
+`import "github.com/improbable-eng/go-httpwares/tags"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -37,7 +37,7 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./..)
+- [github.com/improbable-eng/go-httpwares](./..)
 
 ## <a name="pkg-index">Index</a>
 * [Constants](#pkg-constants)

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/logging"
+	"github.com/improbable-eng/go-httpwares"
+	"github.com/improbable-eng/go-httpwares/logging"
 	"github.com/sirupsen/logrus"
 )
 

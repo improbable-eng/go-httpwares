@@ -1,5 +1,5 @@
 # http_debug
-`import "github.com/mwitkow/go-httpwares/tracing/debug"`
+`import "github.com/improbable-eng/go-httpwares/tracing/debug"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -15,8 +15,8 @@ This utilises the `x/net/trace` handlers that allow you to trace old requests.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./../..)
-- [github.com/mwitkow/go-httpwares/tags](./../../tags)
+- [github.com/improbable-eng/go-httpwares](./../..)
+- [github.com/improbable-eng/go-httpwares/tags](./../../tags)
 - [golang.org/x/net/trace](https://godoc.org/golang.org/x/net/trace)
 
 ## <a name="pkg-index">Index</a>

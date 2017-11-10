@@ -3,7 +3,7 @@ package http_ctxtags
 import (
 	"net/http"
 
-	"github.com/mwitkow/go-httpwares"
+	"github.com/improbable-eng/go-httpwares"
 )
 
 // Tripperware returns a new client-side ware that injects tags about the request.

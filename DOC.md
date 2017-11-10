@@ -1,5 +1,5 @@
 # httpwares
-`import "github.com/mwitkow/go-httpwares"`
+`import "github.com/improbable-eng/go-httpwares"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)

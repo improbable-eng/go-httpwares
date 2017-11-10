@@ -9,8 +9,8 @@ import (
 
 	"fmt"
 
-	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares"
+	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )

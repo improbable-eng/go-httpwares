@@ -1,5 +1,5 @@
 # http_metrics
-`import "github.com/mwitkow/go-httpwares/metrics"`
+`import "github.com/improbable-eng/go-httpwares/metrics"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
@@ -16,7 +16,7 @@ detail is included using options to these reporters.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/mwitkow/go-httpwares](./..)
+- [github.com/improbable-eng/go-httpwares](./..)
 
 ## <a name="pkg-index">Index</a>
 * [func Middleware(reporter Reporter) httpwares.Middleware](#Middleware)
