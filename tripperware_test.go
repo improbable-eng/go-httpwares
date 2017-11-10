@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/mwitkow/go-httpwares"
+	"github.com/improbable-eng/go-httpwares"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

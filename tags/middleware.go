@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mwitkow/go-httpwares"
+	"github.com/improbable-eng/go-httpwares"
 )
 
 // Middleware returns a http.Handler middleware values for request tags.

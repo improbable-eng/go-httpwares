@@ -11,9 +11,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/mwitkow/go-httpwares/logging/logrus"
-	"github.com/mwitkow/go-httpwares/tags"
-	"github.com/mwitkow/go-httpwares/testing"
+	"github.com/improbable-eng/go-httpwares/logging/logrus"
+	"github.com/improbable-eng/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares/testing"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

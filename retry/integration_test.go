@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/retry"
-	"github.com/mwitkow/go-httpwares/testing"
+	"github.com/improbable-eng/go-httpwares"
+	"github.com/improbable-eng/go-httpwares/retry"
+	"github.com/improbable-eng/go-httpwares/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

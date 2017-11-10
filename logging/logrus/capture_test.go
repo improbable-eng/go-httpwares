@@ -15,9 +15,9 @@ import (
 	"io"
 	"mime/multipart"
 
-	"github.com/mwitkow/go-httpwares"
-	"github.com/mwitkow/go-httpwares/logging/logrus"
-	"github.com/mwitkow/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares"
+	"github.com/improbable-eng/go-httpwares/logging/logrus"
+	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

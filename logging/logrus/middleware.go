@@ -8,7 +8,7 @@ import (
 
 	"net/http"
 
-	"github.com/mwitkow/go-httpwares"
+	"github.com/improbable-eng/go-httpwares"
 	"github.com/sirupsen/logrus"
 )
 
