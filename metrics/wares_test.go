@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/metrics"
 	"github.com/improbable-eng/go-httpwares/metrics/prometheus"
 	"github.com/improbable-eng/go-httpwares/tags"
-	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

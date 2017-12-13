@@ -14,9 +14,9 @@ import (
 	"crypto/tls"
 	"net/http"
 
-	"github.com/mwitkow/go-conntrack/connhelpers"
-	"github.com/improbable-eng/go-httpwares"
 	"github.com/go-chi/chi"
+	"github.com/improbable-eng/go-httpwares"
+	"github.com/mwitkow/go-conntrack/connhelpers"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/net/context"

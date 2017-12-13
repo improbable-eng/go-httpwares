@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/go-chi/chi"
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/improbable-eng/go-httpwares/tags/chi"
 	"github.com/improbable-eng/go-httpwares/testing"
-	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
