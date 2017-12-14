@@ -6,8 +6,8 @@ package http_chitags
 import (
 	"net/http"
 
-	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/go-chi/chi"
+	"github.com/improbable-eng/go-httpwares/tags"
 )
 
 // ChiRouteTagExtractor extracts chi router information and puts them into tags.

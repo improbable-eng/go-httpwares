@@ -57,7 +57,7 @@ http.ListenAndServe(":8888", r)
 
 </details>
 
-## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L15)
+## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L16)
 ``` go
 func Tripperware(reporter Reporter) httpwares.Tripperware
 ```
