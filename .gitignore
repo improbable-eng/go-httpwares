@@ -6,6 +6,7 @@ coverage.txt
 *.o
 *.a
 *.so
+*.swp
 
 # Folders
 _obj

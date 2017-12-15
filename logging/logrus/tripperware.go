@@ -48,7 +48,7 @@ func newClientRequestFields(req *http.Request) logrus.Fields {
 		"http.url.path":             req.URL.Path,
 		"http.request.length_bytes": req.ContentLength,
 	}
-	for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
+	for k, v := range http_ctxtags.Extract(req.Context()).Values() {
 		fields[k] = v
 	}
 	return fields

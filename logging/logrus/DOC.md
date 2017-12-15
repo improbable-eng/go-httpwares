@@ -4,7 +4,6 @@
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
 * [Index](#pkg-index)
-* [Examples](#pkg-examples)
 
 ## <a name="pkg-overview">Overview</a>
 `http_logrus` is a HTTP logging middleware for the Logrus logging stack.
@@ -79,8 +78,8 @@ Please see examples and tests for examples of use.
 - [github.com/improbable-eng/go-httpwares](./../..)
 - [github.com/improbable-eng/go-httpwares/logging](./..)
 - [github.com/improbable-eng/go-httpwares/tags](./../../tags)
+- [github.com/improbable-eng/go-httpwares/tags/logrus](./../../tags/logrus)
 - [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
-- [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 
 ## <a name="pkg-index">Index</a>
 * [Variables](#pkg-variables)
@@ -89,8 +88,6 @@ Please see examples and tests for examples of use.
 * [func ContentCaptureTripperware(entry \*logrus.Entry, decider http\_logging.ContentCaptureDeciderFunc) httpwares.Tripperware](#ContentCaptureTripperware)
 * [func DefaultMiddlewareCodeToLevel(httpStatusCode int) logrus.Level](#DefaultMiddlewareCodeToLevel)
 * [func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level](#DefaultTripperwareCodeToLevel)
-* [func Extract(req \*http.Request) \*logrus.Entry](#Extract)
-* [func ExtractFromContext(ctx context.Context) \*logrus.Entry](#ExtractFromContext)
 * [func Middleware(entry \*logrus.Entry, opts ...Option) httpwares.Middleware](#Middleware)
 * [func Tripperware(entry \*logrus.Entry, opts ...Option) httpwares.Tripperware](#Tripperware)
 * [type CodeToLevel](#CodeToLevel)
@@ -100,11 +97,8 @@ Please see examples and tests for examples of use.
   * [func WithRequestBodyCapture(deciderFunc func(r \*http.Request) bool) Option](#WithRequestBodyCapture)
   * [func WithResponseBodyCapture(deciderFunc func(r \*http.Request, status int) bool) Option](#WithResponseBodyCapture)
 
-#### <a name="pkg-examples">Examples</a>
-* [Extract (WithCustomTags)](#example_Extract_withCustomTags)
-
 #### <a name="pkg-files">Package files</a>
-[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [context.go](./context.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [noop.go](./noop.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
+[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
 ## <a name="pkg-variables">Variables</a>
 ``` go
@@ -120,7 +114,7 @@ func AsHttpLogger(logger *logrus.Entry) *log.Logger
 ```
 AsHttpLogger returns the given logrus instance as an HTTP logger.
 
-## <a name="ContentCaptureMiddleware">func</a> [ContentCaptureMiddleware](./capture_middleware.go#L27)
+## <a name="ContentCaptureMiddleware">func</a> [ContentCaptureMiddleware](./capture_middleware.go#L28)
 ``` go
 func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Middleware
 ```
@@ -149,67 +143,17 @@ The body will be recorded as a separate log message. Body of `application/json` 
 http.request.body_json (in structured JSON form) and others will be captured as http.request.body_raw logrus field
 (raw base64-encoded value).
 
-## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L102)
+## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L101)
 ``` go
 func DefaultMiddlewareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultMiddlewareCodeToLevel is the default of a mapper between HTTP server-side status codes and logrus log levels.
 
-## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L115)
+## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L114)
 ``` go
 func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultTripperwareCodeToLevel is the default of a mapper between HTTP client-side status codes and logrus log levels.
-
-## <a name="Extract">func</a> [Extract](./context.go#L25)
-``` go
-func Extract(req *http.Request) *logrus.Entry
-```
-Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
-
-The logger will have fields pre-populated using http_ctxtags.
-
-If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
-
-#### Example:
-
-<details>
-<summary>Click to expand code.</summary>
-
-```go
-package http_logrus_test
-
-import (
-    "net/http"
-
-    "github.com/improbable-eng/go-httpwares/logging/logrus"
-    "github.com/improbable-eng/go-httpwares/tags"
-)
-
-var handler http.HandlerFunc
-
-// Simple example of a `http.Handler` extracting the `Middleware`-injected logrus logger from the context.
-func ExampleExtract_withCustomTags() {
-    handler = func(resp http.ResponseWriter, req *http.Request) {
-        // Handlers can add extra tags to `http_ctxtags` that will be set in both the extracted loggers *and*
-        // the final log statement.
-        http_ctxtags.ExtractInbound(req).Set("my_custom.my_string", "something").Set("my_custom.my_int", 1337)
-        http_logrus.Extract(req).Warningf("Hello World")
-    }
-}
-```
-
-</details>
-
-## <a name="ExtractFromContext">func</a> [ExtractFromContext](./context.go#L34)
-``` go
-func ExtractFromContext(ctx context.Context) *logrus.Entry
-```
-Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
-
-The logger will have fields pre-populated using http_ctxtags.
-
-If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
 
 ## <a name="Middleware">func</a> [Middleware](./middleware.go#L23)
 ``` go
@@ -228,24 +172,24 @@ Tripperware is a server-side http ware for logging using logrus.
 This tripperware *does not* propagate a context-based logger, but act as a logger of requests.
 This includes logging of errors.
 
-## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L51)
+## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L50)
 ``` go
 type CodeToLevel func(httpStatusCode int) logrus.Level
 ```
 CodeToLevel user functions define the mapping between HTTP status codes and logrus log levels.
 
-## <a name="Option">type</a> [Option](./options.go#L48)
+## <a name="Option">type</a> [Option](./options.go#L47)
 ``` go
 type Option func(*options)
 ```
 
-### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L64)
+### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L63)
 ``` go
 func WithConnectivityErrorLevel(level logrus.Level) Option
 ```
 WithConnectivityErrorLevel customizes
 
-### <a name="WithLevels">func</a> [WithLevels](./options.go#L57)
+### <a name="WithLevels">func</a> [WithLevels](./options.go#L56)
 ``` go
 func WithLevels(f CodeToLevel) Option
 ```
@@ -254,7 +198,7 @@ WithLevels customizes the function that maps HTTP client or server side status c
 By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware, and `DefaultTripperwareCodeToLevel`
 is used for client-side tripperware.
 
-### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L82)
+### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L81)
 ``` go
 func WithRequestBodyCapture(deciderFunc func(r *http.Request) bool) Option
 ```
@@ -271,7 +215,7 @@ For middleware, only requests with a set Content-Length will be captured, with n
 
 This option creates a copy of the body per request, so please use with care.
 
-### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L95)
+### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L94)
 ``` go
 func WithResponseBodyCapture(deciderFunc func(r *http.Request, status int) bool) Option
 ```

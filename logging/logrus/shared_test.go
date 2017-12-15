@@ -1,18 +1,19 @@
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
+
 package http_logrus_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"strings"
 	"testing"
-
-	"bytes"
-	"encoding/json"
-	"io"
 	"time"
 
-	"github.com/improbable-eng/go-httpwares/logging/logrus"
 	"github.com/improbable-eng/go-httpwares/tags"
+	"github.com/improbable-eng/go-httpwares/tags/logrus"
 	"github.com/improbable-eng/go-httpwares/testing"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -36,9 +37,9 @@ type loggingHandler struct {
 }
 
 func (a *loggingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	assert.NotNil(a.T, http_logrus.Extract(req), "handlers must have access to the loggermust have ")
-	http_ctxtags.ExtractInbound(req).Set("custom_tags.string", "something").Set("custom_tags.int", 1337)
-	http_logrus.Extract(req).Warningf("handler_log")
+	assert.NotNil(a.T, ctx_logrus.Extract(req.Context()), "handlers must have access to the logger")
+	http_ctxtags.Extract(req.Context()).Set("custom_tags.string", "something").Set("custom_tags.int", 1337)
+	ctx_logrus.Extract(req.Context()).Warningf("handler_log")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }
 

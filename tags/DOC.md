@@ -41,7 +41,6 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
 
 ## <a name="pkg-index">Index</a>
 * [Constants](#pkg-constants)
-* [Variables](#pkg-variables)
 * [func DefaultServiceNameDetector(req \*http.Request) string](#DefaultServiceNameDetector)
 * [func HandlerName(handlerName string) httpwares.Middleware](#HandlerName)
 * [func Middleware(handlerGroupName string, opts ...Option) httpwares.Middleware](#Middleware)
@@ -52,6 +51,7 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
   * [func WithTagExtractor(f RequestTagExtractorFunc) Option](#WithTagExtractor)
 * [type RequestTagExtractorFunc](#RequestTagExtractorFunc)
 * [type Tags](#Tags)
+  * [func Extract(ctx context.Context) \*Tags](#Extract)
   * [func ExtractInbound(req \*http.Request) \*Tags](#ExtractInbound)
   * [func ExtractInboundFromCtx(ctx context.Context) \*Tags](#ExtractInboundFromCtx)
   * [func ExtractOutbound(req \*http.Request) \*Tags](#ExtractOutbound)
@@ -66,30 +66,31 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
 ## <a name="pkg-constants">Constants</a>
 ``` go
 const (
-    // TagForCallService is a string naming the ctxtag identifying a "service" grouping for an http.Request (e.g. "github")
-    TagForCallService = "http.call.service"
-
     // TagForHandlerGroup is a string naming the ctxtag identifying a name of the grouping of http.Handlers (e.g. auth).
     TagForHandlerGroup = "http.handler.group"
     // TagForHandlerName is a string naming the ctxtag identifying a logical name for the http.Handler (e.g. exchange_token).
     TagForHandlerName = "http.handler.name"
 )
 ```
-
-## <a name="pkg-variables">Variables</a>
 ``` go
-var (
+const (
     DefaultServiceName = "unspecified"
 )
 ```
+``` go
+const (
+    // TagForCallService is a string naming the ctxtag identifying a "service" grouping for an http.Request (e.g. "github")
+    TagForCallService = "http.call.service"
+)
+```
 
-## <a name="DefaultServiceNameDetector">func</a> [DefaultServiceNameDetector](./options.go#L82)
+## <a name="DefaultServiceNameDetector">func</a> [DefaultServiceNameDetector](./options.go#L73)
 ``` go
 func DefaultServiceNameDetector(req *http.Request) string
 ```
 DefaultServiceNameDetector is the default detector of services from URLs.
 
-## <a name="HandlerName">func</a> [HandlerName](./middleware.go#L49)
+## <a name="HandlerName">func</a> [HandlerName](./middleware.go#L56)
 ``` go
 func HandlerName(handlerName string) httpwares.Middleware
 ```
@@ -99,7 +100,7 @@ given service name and method name.
 This tag will be used for tracing, logging and monitoring purposes. This *needs* to be set in a chain of
 Middleware that has `http_ctxtags.Middleware` before it.
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L17)
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L24)
 ``` go
 func Middleware(handlerGroupName string, opts ...Option) httpwares.Middleware
 ```
@@ -107,18 +108,18 @@ Middleware returns a http.Handler middleware values for request tags.
 
 handlerGroupName specifies a logical name for a group of handlers.
 
-## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L10)
+## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L15)
 ``` go
 func Tripperware(opts ...Option) httpwares.Tripperware
 ```
 Tripperware returns a new client-side ware that injects tags about the request.
 
-## <a name="Option">type</a> [Option](./options.go#L47)
+## <a name="Option">type</a> [Option](./options.go#L38)
 ``` go
 type Option func(*options)
 ```
 
-### <a name="WithServiceName">func</a> [WithServiceName](./options.go#L66)
+### <a name="WithServiceName">func</a> [WithServiceName](./options.go#L57)
 ``` go
 func WithServiceName(serviceName string) Option
 ```
@@ -128,7 +129,7 @@ This option takes precedence over the WithServiceNameDetector values.
 
 For example WithServiceName("github").
 
-### <a name="WithServiceNameDetector">func</a> [WithServiceNameDetector](./options.go#L75)
+### <a name="WithServiceNameDetector">func</a> [WithServiceNameDetector](./options.go#L66)
 ``` go
 func WithServiceNameDetector(fn serviceNameDetectorFunc) Option
 ```
@@ -136,19 +137,19 @@ WithServiceNameDetector allows you to customize the function for automatically d
 
 By default it uses the `DefaultServiceNameDetector`.
 
-### <a name="WithTagExtractor">func</a> [WithTagExtractor](./options.go#L55)
+### <a name="WithTagExtractor">func</a> [WithTagExtractor](./options.go#L46)
 ``` go
 func WithTagExtractor(f RequestTagExtractorFunc) Option
 ```
 WithTagExtractor adds another request tag extractor, allowing you to customize what tags get prepopulated from the request.
 
-## <a name="RequestTagExtractorFunc">type</a> [RequestTagExtractorFunc](./options.go#L52)
+## <a name="RequestTagExtractorFunc">type</a> [RequestTagExtractorFunc](./options.go#L41)
 ``` go
 type RequestTagExtractorFunc func(req *http.Request) map[string]interface{}
 ```
 RequestTagExtractorFunc is a signature of user-customizeable functions for extracting tags from requests.
 
-## <a name="Tags">type</a> [Tags](./context.go#L23-L25)
+## <a name="Tags">type</a> [Tags](./context.go#L17-L19)
 ``` go
 type Tags struct {
     // contains filtered or unexported fields
@@ -157,19 +158,28 @@ type Tags struct {
 Tags is the struct used for storing request tags between Context calls.
 This object is *not* thread safe, and should be handled only in the context of the request.
 
-### <a name="ExtractInbound">func</a> [ExtractInbound](./context.go#L47)
+### <a name="Extract">func</a> [Extract](./context.go#L41)
+``` go
+func Extract(ctx context.Context) *Tags
+```
+Extracts returns a pre-existing Tags object in the Context.
+If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
+
+### <a name="ExtractInbound">func</a> [ExtractInbound](./context.go#L53)
 ``` go
 func ExtractInbound(req *http.Request) *Tags
 ```
 ExtractInbound returns a pre-existing Tags object in the request's Context meant for server-side.
 If the context wasn't set in the Middleware, a no-op Tag storage is returned that will *not* be propagated in context.
+Deprecated: should use the http_ctxtags.Extract instead
 
-### <a name="ExtractInboundFromCtx">func</a> [ExtractInboundFromCtx](./context.go#L53)
+### <a name="ExtractInboundFromCtx">func</a> [ExtractInboundFromCtx](./context.go#L60)
 ``` go
 func ExtractInboundFromCtx(ctx context.Context) *Tags
 ```
 ExtractInbounfFromCtx returns a pre-existing Tags object in the request's Context.
 If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
+Deprecated: should use the http_ctxtags.Extract instead
 
 ### <a name="ExtractOutbound">func</a> [ExtractOutbound](./context.go#L67)
 ``` go
@@ -177,27 +187,29 @@ func ExtractOutbound(req *http.Request) *Tags
 ```
 ExtractOutbound returns a pre-existing Tags object in the request's Context meant for server-side.
 If the context wasn't set in the Middleware, a no-op Tag storage is returned that will *not* be propagated in context.
+Deprecated: should use the http_ctxtags.Extract instead
 
-### <a name="ExtractOutboundFromCtx">func</a> [ExtractOutboundFromCtx](./context.go#L73)
+### <a name="ExtractOutboundFromCtx">func</a> [ExtractOutboundFromCtx](./context.go#L74)
 ``` go
 func ExtractOutboundFromCtx(ctx context.Context) *Tags
 ```
 ExtractInbounfFromCtx returns a pre-existing Tags object in the request's Context.
 If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
+Deprecated: should use the http_ctxtags.Extract instead
 
-### <a name="Tags.Has">func</a> (\*Tags) [Has](./context.go#L34)
+### <a name="Tags.Has">func</a> (\*Tags) [Has](./context.go#L28)
 ``` go
 func (t *Tags) Has(key string) bool
 ```
 Has checks if the given key exists.
 
-### <a name="Tags.Set">func</a> (\*Tags) [Set](./context.go#L28)
+### <a name="Tags.Set">func</a> (\*Tags) [Set](./context.go#L22)
 ``` go
 func (t *Tags) Set(key string, value interface{}) *Tags
 ```
 Set sets the given key in the metadata tags.
 
-### <a name="Tags.Values">func</a> (\*Tags) [Values](./context.go#L41)
+### <a name="Tags.Values">func</a> (\*Tags) [Values](./context.go#L35)
 ``` go
 func (t *Tags) Values() map[string]interface{}
 ```

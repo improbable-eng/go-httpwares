@@ -1,6 +1,3 @@
-// Copyright 2017 Mark Nevill. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 package http_prometheus
 
 import (
@@ -16,12 +13,7 @@ type meta struct {
 func reqMeta(req *http.Request, opts *options, inbound bool) *meta {
 	m := &meta{name: opts.name, method: req.Method}
 
-	var tags map[string]interface{}
-	if inbound {
-		tags = http_ctxtags.ExtractInbound(req).Values()
-	} else {
-		tags = http_ctxtags.ExtractOutbound(req).Values()
-	}
+	tags := http_ctxtags.Extract(req.Context()).Values()
 	var v interface{}
 	if m.name == "" {
 		v, _ = tags[http_ctxtags.TagForCallService]
