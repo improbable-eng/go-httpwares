@@ -36,7 +36,7 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 
 			resp, err := next.RoundTrip(req)
 
-			tr.LazyPrintf("%s", fmtTags(http_ctxtags.ExtractInbound(req).Values()))
+			tr.LazyPrintf("%s", fmtTags(http_ctxtags.Extract(req.Context()).Values()))
 
 			if err != nil {
 				tr.LazyPrintf("Error on response: %v", err)

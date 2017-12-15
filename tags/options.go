@@ -1,5 +1,4 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 
 package http_ctxtags
 
@@ -9,24 +8,16 @@ import (
 	"strings"
 )
 
-const (
-	// TagForCallService is a string naming the ctxtag identifying a "service" grouping for an http.Request (e.g. "github")
-	TagForCallService = "http.call.service"
-
-	// TagForHandlerGroup is a string naming the ctxtag identifying a name of the grouping of http.Handlers (e.g. auth).
-	TagForHandlerGroup = "http.handler.group"
-	// TagForHandlerName is a string naming the ctxtag identifying a logical name for the http.Handler (e.g. exchange_token).
-	TagForHandlerName = "http.handler.name"
-)
-
 var (
-	DefaultServiceName = "unspecified"
-
 	defaultOptions = &options{
 		tagExtractors:           []RequestTagExtractorFunc{},
 		serviceName:             "",
 		serviceNameDetectorFunc: DefaultServiceNameDetector,
 	}
+)
+
+const (
+	DefaultServiceName = "unspecified"
 )
 
 type options struct {
@@ -46,10 +37,10 @@ func evaluateOptions(opts []Option) *options {
 
 type Option func(*options)
 
-type serviceNameDetectorFunc func(req *http.Request) string
-
 // RequestTagExtractorFunc is a signature of user-customizeable functions for extracting tags from requests.
 type RequestTagExtractorFunc func(req *http.Request) map[string]interface{}
+
+type serviceNameDetectorFunc func(req *http.Request) string
 
 // WithTagExtractor adds another request tag extractor, allowing you to customize what tags get prepopulated from the request.
 func WithTagExtractor(f RequestTagExtractorFunc) Option {

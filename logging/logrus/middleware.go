@@ -1,14 +1,14 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
+// Copyright (c) Improbable Worlds Ltd, All Rights Reserved
 // See LICENSE for licensing terms.
 
 package http_logrus
 
 import (
+	"net/http"
 	"time"
 
-	"net/http"
-
 	"github.com/improbable-eng/go-httpwares"
+	"github.com/improbable-eng/go-httpwares/tags/logrus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,13 +26,14 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := httpwares.WrapResponseWriter(resp)
 			newEntry := entry.WithFields(newServerRequestFields(req))
-			newReq := req.WithContext(toContext(req.Context(), newEntry))
+			newReq := req.WithContext(ctx_logrus.ToContext(req.Context(), newEntry))
 			var capture *responseCapture
 			wrappedResp.ObserveWriteHeader(func(w httpwares.WrappedResponseWriter, code int) {
 				if o.responseCaptureFunc(req, code) {
-					capture = captureMiddlewareResponseContent(w, Extract(newReq))
+					capture = captureMiddlewareResponseContent(w, ctx_logrus.Extract(newReq.Context()))
 				}
 			})
+
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, newReq)
 			capture.finish() // captureResponse has a nil check, this can be nil
@@ -43,7 +44,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			}
 			level := o.levelFunc(wrappedResp.StatusCode())
 			levelLogf(
-				Extract(newReq).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
+				ctx_logrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
 				"handled")
 		})
