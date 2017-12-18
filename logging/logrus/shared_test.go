@@ -11,8 +11,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
 	"github.com/improbable-eng/go-httpwares/tags"
-	"github.com/improbable-eng/go-httpwares/tags/logrus"
 	"github.com/improbable-eng/go-httpwares/testing"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -36,9 +36,9 @@ type loggingHandler struct {
 }
 
 func (a *loggingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	assert.NotNil(a.T, ctx_logrus.Extract(req.Context()), "handlers must have access to the loggermust have ")
+	assert.NotNil(a.T, ctxlogrus.Extract(req.Context()), "handlers must have access to the loggermust have ")
 	http_ctxtags.ExtractInbound(req).Set("custom_tags.string", "something").Set("custom_tags.int", 1337)
-	ctx_logrus.Extract(req.Context()).Warningf("handler_log")
+	ctxlogrus.Extract(req.Context()).Warningf("handler_log")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }
 

@@ -1,18 +1,18 @@
-# ctx_logrus
-`import "github.com/improbable-eng/go-httpwares/tags/logrus"`
+# ctxlogrus
+`import "github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"`
 
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
 * [Index](#pkg-index)
 
 ## <a name="pkg-overview">Overview</a>
-ctx_logrus allows you to store or extract a logrus logger from the context.
+ctxlogrus allows you to store or extract a logrus logger from the context.
 
 The tags on the logger are populated by http_ctxtags if they have already been set.
 
 ## <a name="pkg-imports">Imported Packages</a>
 
-- [github.com/improbable-eng/go-httpwares/tags](./..)
+- [github.com/improbable-eng/go-httpwares/tags](./../../../tags)
 - [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 - [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 

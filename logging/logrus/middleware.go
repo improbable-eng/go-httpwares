@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/improbable-eng/go-httpwares"
-	"github.com/improbable-eng/go-httpwares/tags/logrus"
+	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,18 +20,18 @@ var (
 
 // Middleware is a server-side http ware for logging using logrus.
 //
-// All handlers will have a Logrus logger in their context, which can be fetched using `ctx_logrus.Extract`.
+// All handlers will have a Logrus logger in their context, which can be fetched using `ctxlogrus.Extract`.
 func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 	return func(nextHandler http.Handler) http.Handler {
 		o := evaluateMiddlewareOpts(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := httpwares.WrapResponseWriter(resp)
 			newEntry := entry.WithFields(newServerRequestFields(req))
-			newReq := req.WithContext(ctx_logrus.ToContext(req.Context(), newEntry))
+			newReq := req.WithContext(ctxlogrus.ToContext(req.Context(), newEntry))
 			var capture *responseCapture
 			wrappedResp.ObserveWriteHeader(func(w httpwares.WrappedResponseWriter, code int) {
 				if o.responseCaptureFunc(req, code) {
-					capture = captureMiddlewareResponseContent(w, ctx_logrus.Extract(newReq.Context()))
+					capture = captureMiddlewareResponseContent(w, ctxlogrus.Extract(newReq.Context()))
 				}
 			})
 			startTime := time.Now()
@@ -44,7 +44,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			}
 			level := o.levelFunc(wrappedResp.StatusCode())
 			levelLogf(
-				ctx_logrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
+				ctxlogrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
 				"handled")
 		})

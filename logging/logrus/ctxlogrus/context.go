@@ -1,4 +1,4 @@
-package ctx_logrus
+package ctxlogrus
 
 import (
 	"github.com/improbable-eng/go-httpwares/tags"
