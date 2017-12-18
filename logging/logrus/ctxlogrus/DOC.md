@@ -4,6 +4,7 @@
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
 * [Index](#pkg-index)
+* [Examples](#pkg-examples)
 
 ## <a name="pkg-overview">Overview</a>
 ctxlogrus allows you to store or extract a logrus logger from the context.
@@ -20,6 +21,9 @@ The tags on the logger are populated by http_ctxtags if they have already been s
 * [func Extract(ctx context.Context) \*logrus.Entry](#Extract)
 * [func ToContext(ctx context.Context, entry \*logrus.Entry) context.Context](#ToContext)
 
+#### <a name="pkg-examples">Examples</a>
+* [Extract](#example_Extract)
+
 #### <a name="pkg-files">Package files</a>
 [context.go](./context.go) [doc.go](./doc.go) [noop.go](./noop.go) 
 
@@ -32,6 +36,19 @@ Extract takes the call-scoped logrus.Entry from http_logrus middleware.
 The logger will have fields pre-populated using http_ctxtags.
 
 If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
+
+#### Example:
+
+<details>
+<summary>Click to expand code.</summary>
+
+```go
+ctx := context.Background()
+entry := ctxlogrus.Extract(ctx)
+entry.Info("logging")
+```
+
+</details>
 
 ## <a name="ToContext">func</a> [ToContext](./context.go#L30)
 ``` go
