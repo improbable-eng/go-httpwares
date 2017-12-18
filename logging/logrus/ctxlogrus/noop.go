@@ -1,4 +1,4 @@
-package http_logrus
+package ctxlogrus
 
 import (
 	"io/ioutil"
