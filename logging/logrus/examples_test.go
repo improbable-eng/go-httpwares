@@ -15,6 +15,6 @@ func ExampleExtract_withCustomTags() {
 		// Handlers can add extra tags to `http_ctxtags` that will be set in both the extracted loggers *and*
 		// the final log statement.
 		http_ctxtags.ExtractInbound(req).Set("my_custom.my_string", "something").Set("my_custom.my_int", 1337)
-		ctx_logrus.Extract(req).Warningf("Hello World")
+		ctx_logrus.Extract(req.Context()).Warningf("Hello World")
 	}
 }

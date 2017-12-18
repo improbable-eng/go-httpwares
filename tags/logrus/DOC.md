@@ -17,34 +17,23 @@ The tags on the logger are populated by http_ctxtags if they have already been s
 - [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 
 ## <a name="pkg-index">Index</a>
-* [func Extract(req \*http.Request) \*logrus.Entry](#Extract)
-* [func ExtractFromContext(ctx context.Context) \*logrus.Entry](#ExtractFromContext)
+* [func Extract(ctx context.Context) \*logrus.Entry](#Extract)
 * [func ToContext(ctx context.Context, entry \*logrus.Entry) context.Context](#ToContext)
 
 #### <a name="pkg-files">Package files</a>
 [context.go](./context.go) [doc.go](./doc.go) [noop.go](./noop.go) 
 
-## <a name="Extract">func</a> [Extract](./context.go#L22)
+## <a name="Extract">func</a> [Extract](./context.go#L20)
 ``` go
-func Extract(req *http.Request) *logrus.Entry
+func Extract(ctx context.Context) *logrus.Entry
 ```
-Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
+Extract takes the call-scoped logrus.Entry from http_logrus middleware.
 
 The logger will have fields pre-populated using http_ctxtags.
 
 If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
 
-## <a name="ExtractFromContext">func</a> [ExtractFromContext](./context.go#L31)
-``` go
-func ExtractFromContext(ctx context.Context) *logrus.Entry
-```
-Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
-
-The logger will have fields pre-populated using http_ctxtags.
-
-If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
-
-## <a name="ToContext">func</a> [ToContext](./context.go#L41)
+## <a name="ToContext">func</a> [ToContext](./context.go#L30)
 ``` go
 func ToContext(ctx context.Context, entry *logrus.Entry) context.Context
 ```

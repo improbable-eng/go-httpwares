@@ -31,7 +31,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			var capture *responseCapture
 			wrappedResp.ObserveWriteHeader(func(w httpwares.WrappedResponseWriter, code int) {
 				if o.responseCaptureFunc(req, code) {
-					capture = captureMiddlewareResponseContent(w, ctx_logrus.Extract(newReq))
+					capture = captureMiddlewareResponseContent(w, ctx_logrus.Extract(newReq.Context()))
 				}
 			})
 			startTime := time.Now()
@@ -44,7 +44,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			}
 			level := o.levelFunc(wrappedResp.StatusCode())
 			levelLogf(
-				ctx_logrus.Extract(newReq).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
+				ctx_logrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
 				"handled")
 		})
