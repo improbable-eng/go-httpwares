@@ -10,7 +10,7 @@ It provides both middleware (server-side) and tripperware (client-side) for logg
 
 Middleware server-side logging
 
-The middleware also embeds a request-field scoped `logrus.Entry` (with fields from `http_ctxtags`) inside the `context.Context`
+The middleware also embeds a request-field scoped `logrus.Entry` (with fields from `ctx_logrus`) inside the `context.Context`
 of the `http.Request` that is passed to the executing `http.Handler`. That `logrus.Entry` can be easily extracted using
 It accepts a user-configured `logrus.Entry` that will be used for logging completed HTTP calls. The same
 `logrus.Entry` will be used for logging completed gRPC calls, and be populated into the `context.Context` passed into
@@ -40,8 +40,8 @@ log message will look like:
 
 Tripperware client-side logging
 
-The tripperware uses any `http_ctxtags` to create a request-field scoped `logrus.Entry`. The key one is the `http.call.service`
-which by default is auto-detected from the domain but can be overwritten by the `http_ctxtags` initialization.
+The tripperware uses any `ctx_logrus` to create a request-field scoped `logrus.Entry`. The key one is the `http.call.service`
+which by default is auto-detected from the domain but can be overwritten by the `ctx_logrus` initialization.
 
 Most requests and responses won't be loged. By default only client-side connectivity  and 5** responses cause
 the outbound requests to be logged, but that can be customized using `WithLevels` and `WithConnectivityError` options. A
@@ -64,7 +64,7 @@ typical log message for client side will look like:
 	}
 
 You can use `Extract` to log into a request-scoped `logrus.Entry` instance in your handler code.
-Additional tags to the logger can be added using `http_ctxtags`.
+Additional tags to the logger can be added using `ctx_logrus`.
 
 HTTP Library logging
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/logging"
+	"github.com/improbable-eng/go-httpwares/tags/logrus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,7 +32,7 @@ func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentC
 				nextHandler.ServeHTTP(resp, req)
 				return
 			}
-			logger := entry.WithFields(Extract(req).Data)
+			logger := entry.WithFields(ctx_logrus.Extract(req).Data)
 			if err := captureMiddlewareRequestContent(req, logger); err != nil {
 				// this is *really* bad, we failed to read a body because of a read error.
 				resp.WriteHeader(500)

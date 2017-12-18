@@ -13,7 +13,7 @@ It provides both middleware (server-side) and tripperware (client-side) for logg
 `logrus.Entry`.
 
 ### Middleware server-side logging
-The middleware also embeds a request-field scoped `logrus.Entry` (with fields from `http_ctxtags`) inside the `context.Context`
+The middleware also embeds a request-field scoped `logrus.Entry` (with fields from `ctx_logrus`) inside the `context.Context`
 of the `http.Request` that is passed to the executing `http.Handler`. That `logrus.Entry` can be easily extracted using
 It accepts a user-configured `logrus.Entry` that will be used for logging completed HTTP calls. The same
 `logrus.Entry` will be used for logging completed gRPC calls, and be populated into the `context.Context` passed into
@@ -42,8 +42,8 @@ log message will look like:
 	}
 
 ### Tripperware client-side logging
-The tripperware uses any `http_ctxtags` to create a request-field scoped `logrus.Entry`. The key one is the `http.call.service`
-which by default is auto-detected from the domain but can be overwritten by the `http_ctxtags` initialization.
+The tripperware uses any `ctx_logrus` to create a request-field scoped `logrus.Entry`. The key one is the `http.call.service`
+which by default is auto-detected from the domain but can be overwritten by the `ctx_logrus` initialization.
 
 Most requests and responses won't be loged. By default only client-side connectivity  and 5** responses cause
 the outbound requests to be logged, but that can be customized using `WithLevels` and `WithConnectivityError` options. A
@@ -66,7 +66,7 @@ typical log message for client side will look like:
 	}
 
 You can use `Extract` to log into a request-scoped `logrus.Entry` instance in your handler code.
-Additional tags to the logger can be added using `http_ctxtags`.
+Additional tags to the logger can be added using `ctx_logrus`.
 
 ### HTTP Library logging
 The `http.Server` takes a logger command. You can use the `AsHttpLogger` to take a user-scoped `logrus.Entry` and log
@@ -79,6 +79,7 @@ Please see examples and tests for examples of use.
 - [github.com/improbable-eng/go-httpwares](./../..)
 - [github.com/improbable-eng/go-httpwares/logging](./..)
 - [github.com/improbable-eng/go-httpwares/tags](./../../tags)
+- [github.com/improbable-eng/go-httpwares/tags/logrus](./../../tags/logrus)
 - [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 - [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 
@@ -104,7 +105,7 @@ Please see examples and tests for examples of use.
 * [Extract (WithCustomTags)](#example_Extract_withCustomTags)
 
 #### <a name="pkg-files">Package files</a>
-[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [context.go](./context.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [noop.go](./noop.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
+[capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [context.go](./context.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
 ## <a name="pkg-variables">Variables</a>
 ``` go
@@ -120,7 +121,7 @@ func AsHttpLogger(logger *logrus.Entry) *log.Logger
 ```
 AsHttpLogger returns the given logrus instance as an HTTP logger.
 
-## <a name="ContentCaptureMiddleware">func</a> [ContentCaptureMiddleware](./capture_middleware.go#L27)
+## <a name="ContentCaptureMiddleware">func</a> [ContentCaptureMiddleware](./capture_middleware.go#L28)
 ``` go
 func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Middleware
 ```
@@ -161,7 +162,7 @@ func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultTripperwareCodeToLevel is the default of a mapper between HTTP client-side status codes and logrus log levels.
 
-## <a name="Extract">func</a> [Extract](./context.go#L25)
+## <a name="Extract">func</a> [Extract](./context.go#L30)
 ``` go
 func Extract(req *http.Request) *logrus.Entry
 ```
@@ -170,6 +171,7 @@ Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
 The logger will have fields pre-populated using http_ctxtags.
 
 If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
+Deprecated use ctx_logrus.Extract instead
 
 #### Example:
 
@@ -182,8 +184,8 @@ package http_logrus_test
 import (
     "net/http"
 
-    "github.com/improbable-eng/go-httpwares/logging/logrus"
     "github.com/improbable-eng/go-httpwares/tags"
+    "github.com/improbable-eng/go-httpwares/tags/logrus"
 )
 
 var handler http.HandlerFunc
@@ -194,14 +196,14 @@ func ExampleExtract_withCustomTags() {
         // Handlers can add extra tags to `http_ctxtags` that will be set in both the extracted loggers *and*
         // the final log statement.
         http_ctxtags.ExtractInbound(req).Set("my_custom.my_string", "something").Set("my_custom.my_int", 1337)
-        http_logrus.Extract(req).Warningf("Hello World")
+        ctx_logrus.Extract(req).Warningf("Hello World")
     }
 }
 ```
 
 </details>
 
-## <a name="ExtractFromContext">func</a> [ExtractFromContext](./context.go#L34)
+## <a name="ExtractFromContext">func</a> [ExtractFromContext](./context.go#L40)
 ``` go
 func ExtractFromContext(ctx context.Context) *logrus.Entry
 ```
@@ -210,14 +212,15 @@ Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
 The logger will have fields pre-populated using http_ctxtags.
 
 If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
+Deprecated use ctx_logrus.ExtractFromContext instead
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L23)
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L24)
 ``` go
 func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware
 ```
 Middleware is a server-side http ware for logging using logrus.
 
-All handlers will have a Logrus logger in their context, which can be fetched using `http_logrus.Extract`.
+All handlers will have a Logrus logger in their context, which can be fetched using `ctx_logrus.Extract`.
 
 ## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L19)
 ``` go

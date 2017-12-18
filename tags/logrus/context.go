@@ -1,24 +1,17 @@
-// Copyright 2016 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
-package http_logrus
+package ctx_logrus
 
 import (
 	"net/http"
 
-	"github.com/improbable-eng/go-httpwares/tags/logrus"
+	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
-	"io/ioutil"
 )
 
+type ctxMarker struct{}
+
 var (
-	nullLogger = &logrus.Logger{
-		Out:       ioutil.Discard,
-		Formatter: new(logrus.TextFormatter),
-		Hooks:     make(logrus.LevelHooks),
-		Level:     logrus.PanicLevel,
-	}
+	ctxMarkerKey = &ctxMarker{}
 )
 
 // Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
@@ -26,9 +19,8 @@ var (
 // The logger will have fields pre-populated using http_ctxtags.
 //
 // If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
-// Deprecated use ctx_logrus.Extract instead
 func Extract(req *http.Request) *logrus.Entry {
-	return ctx_logrus.ExtractFromContext(req.Context())
+	return ExtractFromContext(req.Context())
 }
 
 // Extract takes the call-scoped logrus.Entry from grpc_logrus middleware.
@@ -36,7 +28,17 @@ func Extract(req *http.Request) *logrus.Entry {
 // The logger will have fields pre-populated using http_ctxtags.
 //
 // If the http_logrus middleware wasn't used, a no-op `logrus.Entry` is returned. This makes it safe to use regardless.
-// Deprecated use ctx_logrus.ExtractFromContext instead
 func ExtractFromContext(ctx context.Context) *logrus.Entry {
-	return ctx_logrus.ExtractFromContext(ctx)
+	l, ok := ctx.Value(ctxMarkerKey).(*logrus.Entry)
+	if !ok {
+		return logrus.NewEntry(nullLogger)
+	}
+	// Add grpc_ctxtags tags metadata until now.
+	return l.WithFields(logrus.Fields(http_ctxtags.ExtractInboundFromCtx(ctx).Values()))
+}
+
+// ToContext sets a logrus logger on the context, which can then obtained by Extract.
+func ToContext(ctx context.Context, entry *logrus.Entry) context.Context {
+	return context.WithValue(ctx, ctxMarkerKey, entry)
+
 }
