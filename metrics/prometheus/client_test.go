@@ -47,7 +47,7 @@ func TestPrometheusClientMetricLables(t *testing.T) {
 		http_ctxtags.Tripperware(http_ctxtags.WithServiceName("testing")),
 		func(next http.RoundTripper) http.RoundTripper {
 			return httpwares.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-				http_ctxtags.ExtractOutbound(req).Set(http_ctxtags.TagForHandlerName, "testhandler")
+				http_ctxtags.Extract(req.Context()).Set(http_ctxtags.TagForHandlerName, "testhandler")
 				return next.RoundTrip(req)
 			})
 		},

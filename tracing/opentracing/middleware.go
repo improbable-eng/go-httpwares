@@ -28,7 +28,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 				next.ServeHTTP(resp, req)
 				return
 			}
-			tags := http_ctxtags.ExtractInbound(req)
+			tags := http_ctxtags.Extract(req.Context())
 			newReq, serverSpan := newServerSpanFromInbound(req, o.tracer)
 			hackyInjectOpentracingIdsToTags(serverSpan, tags)
 			newResp := httpwares.WrapResponseWriter(resp)
@@ -68,7 +68,7 @@ func newServerSpanFromInbound(req *http.Request, tracer opentracing.Tracer) (*ht
 }
 
 func operationNameFromReqHandler(req *http.Request) string {
-	if tags := http_ctxtags.ExtractInbound(req); tags.Has(http_ctxtags.TagForHandlerGroup) {
+	if tags := http_ctxtags.Extract(req.Context()); tags.Has(http_ctxtags.TagForHandlerGroup) {
 		vals := tags.Values()
 		method := "unknown"
 		if val, ok := vals[http_ctxtags.TagForHandlerName].(string); ok {

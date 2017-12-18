@@ -18,7 +18,7 @@ func Middleware(handlerGroupName string, opts ...Option) httpwares.Middleware {
 	o := evaluateOptions(opts)
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			t := ExtractInboundFromCtx(req.Context()) // will allocate a new one if it didn't exist.
+			t := Extract(req.Context()) // will allocate a new one if it didn't exist.
 			needUpdatingContext := true
 			if len(t.Values()) > 0 {
 				needUpdatingContext = false
@@ -34,7 +34,7 @@ func Middleware(handlerGroupName string, opts ...Option) httpwares.Middleware {
 			t.Set(TagForHandlerGroup, handlerGroupName)
 			newReq := req
 			if needUpdatingContext {
-				newReq = req.WithContext(setInboundInContext(req.Context(), t))
+				newReq = req.WithContext(setInContext(req.Context(), t))
 			}
 			next.ServeHTTP(resp, newReq)
 		})
@@ -49,7 +49,7 @@ func Middleware(handlerGroupName string, opts ...Option) httpwares.Middleware {
 func HandlerName(handlerName string) httpwares.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			t := ExtractInbound(req)
+			t := Extract(req.Context())
 			t.Set(TagForHandlerName, handlerName)
 			next.ServeHTTP(resp, req)
 		})

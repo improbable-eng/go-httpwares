@@ -23,7 +23,7 @@ func Extract(ctx context.Context) *logrus.Entry {
 		return logrus.NewEntry(nullLogger)
 	}
 	// Add http_ctxtags tags metadata until now.
-	return l.WithFields(logrus.Fields(http_ctxtags.ExtractInboundFromCtx(ctx).Values()))
+	return l.WithFields(logrus.Fields(http_ctxtags.Extract(ctx).Values()))
 }
 
 // ToContext sets a logrus logger on the context, which can then obtained by Extract.

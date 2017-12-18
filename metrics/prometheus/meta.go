@@ -18,9 +18,9 @@ func reqMeta(req *http.Request, opts *options, inbound bool) *meta {
 
 	var tags map[string]interface{}
 	if inbound {
-		tags = http_ctxtags.ExtractInbound(req).Values()
+		tags = http_ctxtags.Extract(req.Context()).Values()
 	} else {
-		tags = http_ctxtags.ExtractOutbound(req).Values()
+		tags = http_ctxtags.Extract(req.Context()).Values()
 	}
 	var v interface{}
 	if m.name == "" {
