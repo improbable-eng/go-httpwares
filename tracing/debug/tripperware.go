@@ -36,7 +36,7 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 
 			resp, err := next.RoundTrip(req)
 
-			tr.LazyPrintf("%s", fmtTags(http_ctxtags.ExtractInbound(req).Values()))
+			tr.LazyPrintf("%s", fmtTags(http_ctxtags.Extract(req.Context()).Values()))
 
 			if err != nil {
 				tr.LazyPrintf("Error on response: %v", err)
@@ -54,7 +54,7 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 }
 
 func operationNameFromUrl(req *http.Request) string {
-	if tags := http_ctxtags.ExtractOutbound(req); tags.Has(http_ctxtags.TagForCallService) {
+	if tags := http_ctxtags.Extract(req.Context()); tags.Has(http_ctxtags.TagForCallService) {
 		vals := tags.Values()
 		return fmt.Sprintf("%v.%s", vals[http_ctxtags.TagForCallService], req.Method)
 	}

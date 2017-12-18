@@ -37,7 +37,7 @@ type loggingHandler struct {
 
 func (a *loggingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	assert.NotNil(a.T, ctxlogrus.Extract(req.Context()), "handlers must have access to the loggermust have ")
-	http_ctxtags.ExtractInbound(req).Set("custom_tags.string", "something").Set("custom_tags.int", 1337)
+	http_ctxtags.Extract(req.Context()).Set("custom_tags.string", "something").Set("custom_tags.int", 1337)
 	ctxlogrus.Extract(req.Context()).Warningf("handler_log")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }

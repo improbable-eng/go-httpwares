@@ -52,10 +52,7 @@ Tags fields are typed, and shallow and should follow the OpenTracing semantics c
   * [func WithTagExtractor(f RequestTagExtractorFunc) Option](#WithTagExtractor)
 * [type RequestTagExtractorFunc](#RequestTagExtractorFunc)
 * [type Tags](#Tags)
-  * [func ExtractInbound(req \*http.Request) \*Tags](#ExtractInbound)
-  * [func ExtractInboundFromCtx(ctx context.Context) \*Tags](#ExtractInboundFromCtx)
-  * [func ExtractOutbound(req \*http.Request) \*Tags](#ExtractOutbound)
-  * [func ExtractOutboundFromCtx(ctx context.Context) \*Tags](#ExtractOutboundFromCtx)
+  * [func Extract(ctx context.Context) \*Tags](#Extract)
   * [func (t \*Tags) Has(key string) bool](#Tags.Has)
   * [func (t \*Tags) Set(key string, value interface{}) \*Tags](#Tags.Set)
   * [func (t \*Tags) Values() map[string]interface{}](#Tags.Values)
@@ -148,7 +145,7 @@ type RequestTagExtractorFunc func(req *http.Request) map[string]interface{}
 ```
 RequestTagExtractorFunc is a signature of user-customizeable functions for extracting tags from requests.
 
-## <a name="Tags">type</a> [Tags](./context.go#L23-L25)
+## <a name="Tags">type</a> [Tags](./context.go#L19-L21)
 ``` go
 type Tags struct {
     // contains filtered or unexported fields
@@ -157,47 +154,26 @@ type Tags struct {
 Tags is the struct used for storing request tags between Context calls.
 This object is *not* thread safe, and should be handled only in the context of the request.
 
-### <a name="ExtractInbound">func</a> [ExtractInbound](./context.go#L47)
+### <a name="Extract">func</a> [Extract](./context.go#L43)
 ``` go
-func ExtractInbound(req *http.Request) *Tags
+func Extract(ctx context.Context) *Tags
 ```
-ExtractInbound returns a pre-existing Tags object in the request's Context meant for server-side.
-If the context wasn't set in the Middleware, a no-op Tag storage is returned that will *not* be propagated in context.
-
-### <a name="ExtractInboundFromCtx">func</a> [ExtractInboundFromCtx](./context.go#L53)
-``` go
-func ExtractInboundFromCtx(ctx context.Context) *Tags
-```
-ExtractInbounfFromCtx returns a pre-existing Tags object in the request's Context.
+Extract returns a pre-existing Tags object in the request's Context.
 If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
 
-### <a name="ExtractOutbound">func</a> [ExtractOutbound](./context.go#L67)
-``` go
-func ExtractOutbound(req *http.Request) *Tags
-```
-ExtractOutbound returns a pre-existing Tags object in the request's Context meant for server-side.
-If the context wasn't set in the Middleware, a no-op Tag storage is returned that will *not* be propagated in context.
-
-### <a name="ExtractOutboundFromCtx">func</a> [ExtractOutboundFromCtx](./context.go#L73)
-``` go
-func ExtractOutboundFromCtx(ctx context.Context) *Tags
-```
-ExtractInbounfFromCtx returns a pre-existing Tags object in the request's Context.
-If the context wasn't set in a tag interceptor, a no-op Tag storage is returned that will *not* be propagated in context.
-
-### <a name="Tags.Has">func</a> (\*Tags) [Has](./context.go#L34)
+### <a name="Tags.Has">func</a> (\*Tags) [Has](./context.go#L30)
 ``` go
 func (t *Tags) Has(key string) bool
 ```
 Has checks if the given key exists.
 
-### <a name="Tags.Set">func</a> (\*Tags) [Set](./context.go#L28)
+### <a name="Tags.Set">func</a> (\*Tags) [Set](./context.go#L24)
 ``` go
 func (t *Tags) Set(key string, value interface{}) *Tags
 ```
 Set sets the given key in the metadata tags.
 
-### <a name="Tags.Values">func</a> (\*Tags) [Values](./context.go#L41)
+### <a name="Tags.Values">func</a> (\*Tags) [Values](./context.go#L37)
 ``` go
 func (t *Tags) Values() map[string]interface{}
 ```

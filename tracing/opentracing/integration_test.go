@@ -34,7 +34,7 @@ type assertingHandler struct {
 
 func (a *assertingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	assert.NotNil(a.T, opentracing.SpanFromContext(req.Context()), "handlers must have the spancontext in their context, otherwise propagation will fail")
-	tags := http_ctxtags.ExtractInbound(req)
+	tags := http_ctxtags.Extract(req.Context())
 	assert.True(a.T, tags.Has("trace.traceid"), "handlers should see traceid in tags")
 	assert.True(a.T, tags.Has("trace.spanid"), "handlers should see traceid in tags")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)

@@ -34,7 +34,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 			next.ServeHTTP(newResp, req)
 
 			tr.LazyPrintf("tags: ")
-			for k, v := range http_ctxtags.ExtractInbound(req).Values() {
+			for k, v := range http_ctxtags.Extract(req.Context()).Values() {
 				tr.LazyPrintf("%v: %v", k, v)
 			}
 			tr.LazyPrintf("Response: %d", newResp.StatusCode())
@@ -47,7 +47,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 }
 
 func operationNameFromReqHandler(req *http.Request) string {
-	if tags := http_ctxtags.ExtractInbound(req); tags.Has(http_ctxtags.TagForHandlerGroup) {
+	if tags := http_ctxtags.Extract(req.Context()); tags.Has(http_ctxtags.TagForHandlerGroup) {
 		vals := tags.Values()
 		method := "unknown"
 		if val, ok := vals[http_ctxtags.TagForHandlerName].(string); ok {
