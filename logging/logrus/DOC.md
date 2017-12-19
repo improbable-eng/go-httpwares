@@ -4,6 +4,7 @@
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
 * [Index](#pkg-index)
+* [Examples](#pkg-examples)
 
 ## <a name="pkg-overview">Overview</a>
 `http_logrus` is a HTTP logging middleware for the Logrus logging stack.
@@ -96,6 +97,9 @@ Please see examples and tests for examples of use.
   * [func WithRequestBodyCapture(deciderFunc func(r \*http.Request) bool) Option](#WithRequestBodyCapture)
   * [func WithResponseBodyCapture(deciderFunc func(r \*http.Request, status int) bool) Option](#WithResponseBodyCapture)
 
+#### <a name="pkg-examples">Examples</a>
+* [Middleware](#example_Middleware)
+
 #### <a name="pkg-files">Package files</a>
 [capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
@@ -161,6 +165,24 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware
 Middleware is a server-side http ware for logging using logrus.
 
 All handlers will have a Logrus logger in their context, which can be fetched using `ctxlogrus.Extract`.
+
+#### Example:
+
+<details>
+<summary>Click to expand code.</summary>
+
+```go
+h := http.NewServeMux()
+h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    ctxlogrus.Extract(r.Context()).Info("logging")
+})
+hm := Middleware(logrus.WithField("test", "abc"))(h)
+if err := http.ListenAndServe(":8080", hm); err != nil {
+    panic(err)
+}
+```
+
+</details>
 
 ## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L15)
 ``` go
