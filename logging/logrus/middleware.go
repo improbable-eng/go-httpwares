@@ -25,7 +25,13 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 		o := evaluateMiddlewareOpts(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := httpwares.WrapResponseWriter(resp)
-			newEntry := entry.WithFields(newServerRequestFields(req))
+
+			requestFields := newServerRequestFields(req)
+			for k, v := range o.requestFieldExtractor(req) {
+				requestFields[k] = v
+			}
+
+			newEntry := entry.WithFields(requestFields)
 			newReq := req.WithContext(ctxlogrus.ToContext(req.Context(), newEntry))
 			var capture *responseCapture
 			wrappedResp.ObserveWriteHeader(func(w httpwares.WrappedResponseWriter, code int) {
@@ -45,6 +51,10 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 				"http.status":  wrappedResp.StatusCode(),
 				"http.time_ms": timeDiffToMilliseconds(startTime),
 			}
+			for k, v := range o.responseFieldExtractor(wrappedResp, newReq) {
+				postCallFields[k] = v
+			}
+
 			level := o.levelFunc(wrappedResp.StatusCode())
 			levelLogf(
 				ctxlogrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
