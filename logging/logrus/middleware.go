@@ -1,6 +1,3 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 package http_logrus
 
 import (
@@ -11,6 +8,8 @@ import (
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
+	"net"
+	"strings"
 )
 
 var (
@@ -52,13 +51,29 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 }
 
 func newServerRequestFields(req *http.Request) logrus.Fields {
-	return logrus.Fields{
+	host := req.URL.Host
+	if host == "" {
+		host = req.Host
+	}
+	fields := logrus.Fields{
 		"system":                    SystemField,
 		"span.kind":                 "server",
 		"http.url.path":             req.URL.Path,
 		"http.proto_major":          req.ProtoMajor,
 		"http.request.length_bytes": req.ContentLength,
+		"http.host":                 host,
 	}
+	if addr := req.RemoteAddr; addr != "" {
+		if strings.Contains(addr, ":") {
+			if host, port, err := net.SplitHostPort(addr); err == nil {
+				fields["peer.address"] = host
+				fields["peer.port"] = port
+			}
+		} else {
+			fields["peer.address"] = addr
+		}
+	}
+	return fields
 }
 
 func levelLogf(entry *logrus.Entry, level logrus.Level, format string, args ...interface{}) {

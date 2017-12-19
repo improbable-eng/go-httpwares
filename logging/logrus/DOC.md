@@ -4,6 +4,7 @@
 * [Overview](#pkg-overview)
 * [Imported Packages](#pkg-imports)
 * [Index](#pkg-index)
+* [Examples](#pkg-examples)
 
 ## <a name="pkg-overview">Overview</a>
 `http_logrus` is a HTTP logging middleware for the Logrus logging stack.
@@ -78,7 +79,6 @@ Please see examples and tests for examples of use.
 - [github.com/improbable-eng/go-httpwares](./../..)
 - [github.com/improbable-eng/go-httpwares/logging](./..)
 - [github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus](./ctxlogrus)
-- [github.com/improbable-eng/go-httpwares/tags](./../../tags)
 - [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 
 ## <a name="pkg-index">Index</a>
@@ -97,6 +97,9 @@ Please see examples and tests for examples of use.
   * [func WithRequestBodyCapture(deciderFunc func(r \*http.Request) bool) Option](#WithRequestBodyCapture)
   * [func WithResponseBodyCapture(deciderFunc func(r \*http.Request, status int) bool) Option](#WithResponseBodyCapture)
 
+#### <a name="pkg-examples">Examples</a>
+* [Middleware](#example_Middleware)
+
 #### <a name="pkg-files">Package files</a>
 [capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
 
@@ -108,13 +111,13 @@ var (
 )
 ```
 
-## <a name="AsHttpLogger">func</a> [AsHttpLogger](./httplogger.go#L13)
+## <a name="AsHttpLogger">func</a> [AsHttpLogger](./httplogger.go#L10)
 ``` go
 func AsHttpLogger(logger *logrus.Entry) *log.Logger
 ```
 AsHttpLogger returns the given logrus instance as an HTTP logger.
 
-## <a name="ContentCaptureMiddleware">func</a> [ContentCaptureMiddleware](./capture_middleware.go#L28)
+## <a name="ContentCaptureMiddleware">func</a> [ContentCaptureMiddleware](./capture_middleware.go#L29)
 ``` go
 func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentCaptureDeciderFunc) httpwares.Middleware
 ```
@@ -143,19 +146,19 @@ The body will be recorded as a separate log message. Body of `application/json` 
 http.request.body_json (in structured JSON form) and others will be captured as http.request.body_raw logrus field
 (raw base64-encoded value).
 
-## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L102)
+## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L99)
 ``` go
 func DefaultMiddlewareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultMiddlewareCodeToLevel is the default of a mapper between HTTP server-side status codes and logrus log levels.
 
-## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L115)
+## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L112)
 ``` go
 func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultTripperwareCodeToLevel is the default of a mapper between HTTP client-side status codes and logrus log levels.
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L24)
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L23)
 ``` go
 func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware
 ```
@@ -163,7 +166,25 @@ Middleware is a server-side http ware for logging using logrus.
 
 All handlers will have a Logrus logger in their context, which can be fetched using `ctxlogrus.Extract`.
 
-## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L19)
+#### Example:
+
+<details>
+<summary>Click to expand code.</summary>
+
+```go
+h := http.NewServeMux()
+h.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    ctxlogrus.Extract(r.Context()).Info("logging")
+})
+hm := Middleware(logrus.WithField("test", "abc"))(h)
+if err := http.ListenAndServe(":8080", hm); err != nil {
+    panic(err)
+}
+```
+
+</details>
+
+## <a name="Tripperware">func</a> [Tripperware](./tripperware.go#L15)
 ``` go
 func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware
 ```
@@ -172,24 +193,24 @@ Tripperware is a server-side http ware for logging using logrus.
 This tripperware *does not* propagate a context-based logger, but act as a logger of requests.
 This includes logging of errors.
 
-## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L51)
+## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L48)
 ``` go
 type CodeToLevel func(httpStatusCode int) logrus.Level
 ```
 CodeToLevel user functions define the mapping between HTTP status codes and logrus log levels.
 
-## <a name="Option">type</a> [Option](./options.go#L48)
+## <a name="Option">type</a> [Option](./options.go#L45)
 ``` go
 type Option func(*options)
 ```
 
-### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L64)
+### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L61)
 ``` go
 func WithConnectivityErrorLevel(level logrus.Level) Option
 ```
 WithConnectivityErrorLevel customizes
 
-### <a name="WithLevels">func</a> [WithLevels](./options.go#L57)
+### <a name="WithLevels">func</a> [WithLevels](./options.go#L54)
 ``` go
 func WithLevels(f CodeToLevel) Option
 ```
@@ -198,7 +219,7 @@ WithLevels customizes the function that maps HTTP client or server side status c
 By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware, and `DefaultTripperwareCodeToLevel`
 is used for client-side tripperware.
 
-### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L82)
+### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L79)
 ``` go
 func WithRequestBodyCapture(deciderFunc func(r *http.Request) bool) Option
 ```
@@ -215,7 +236,7 @@ For middleware, only requests with a set Content-Length will be captured, with n
 
 This option creates a copy of the body per request, so please use with care.
 
-### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L95)
+### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L92)
 ``` go
 func WithResponseBodyCapture(deciderFunc func(r *http.Request, status int) bool) Option
 ```

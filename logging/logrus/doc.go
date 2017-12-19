@@ -1,6 +1,3 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 /*
 `http_logrus` is a HTTP logging middleware for the Logrus logging stack.
 

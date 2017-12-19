@@ -1,6 +1,3 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 package http_logrus_test
 
 import (
@@ -12,7 +9,6 @@ import (
 
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/logging/logrus"
-	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -36,7 +32,6 @@ func TestLogrusTripperwareSuite(t *testing.T) {
 	s.logrusBaseTestSuite.logger.Level = logrus.DebugLevel // most of our log statements are on debug level.
 	// In this suite we have all the Tripperware, but no Middleware.
 	s.WaresTestSuite.ClientTripperware = []httpwares.Tripperware{
-		http_ctxtags.Tripperware(),
 		http_logrus.Tripperware(
 			logrus.NewEntry(s.logrusBaseTestSuite.logger),
 			http_logrus.WithLevels(customTripperwareCodeToLevel),

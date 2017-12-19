@@ -12,6 +12,7 @@ import (
 	"github.com/improbable-eng/go-httpwares/logging"
 	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
+	"net"
 )
 
 // ContentCaptureMiddleware is a server-side http ware for logging contents of HTTP requests and responses (body and headers).
@@ -33,6 +34,7 @@ func ContentCaptureMiddleware(entry *logrus.Entry, decider http_logging.ContentC
 				return
 			}
 			logger := entry.WithFields(ctxlogrus.Extract(req.Context()).Data)
+			logger.WithFields(defaultRequestFields(req))
 			if err := captureMiddlewareRequestContent(req, logger); err != nil {
 				// this is *really* bad, we failed to read a body because of a read error.
 				resp.WriteHeader(500)
@@ -92,6 +94,7 @@ func (c *responseCapture) finish() {
 	if c.content.Len() == 0 {
 		return
 	}
+
 	if c.isJson {
 		e := c.entry.WithField("http.response.body_json", json.RawMessage(c.content.Bytes()))
 		e.Info("response body captured in http.response.body_json field")
@@ -112,4 +115,24 @@ func captureMiddlewareResponseContent(w httpwares.WrappedResponseWriter, entry *
 		w.ObserveWrite(c.observeWrite)
 	})
 	return c
+}
+
+func defaultRequestFields(req *http.Request) logrus.Fields {
+	fields := logrus.Fields{}
+	if addr := req.RemoteAddr; addr != "" {
+		if strings.Contains(addr, ":") {
+			if host, port, err := net.SplitHostPort(addr); err == nil {
+				fields["peer.address"] = host
+				fields["peer.port"] = port
+			}
+		} else {
+			fields["peer.address"] = addr
+		}
+	}
+	host := req.URL.Host
+	if host == "" {
+		host = req.Host
+	}
+	fields["http.host"] = host
+	return fields
 }

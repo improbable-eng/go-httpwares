@@ -1,6 +1,3 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 package http_logrus
 
 import (
@@ -8,7 +5,6 @@ import (
 	"time"
 
 	"github.com/improbable-eng/go-httpwares"
-	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 )
 
@@ -48,8 +44,10 @@ func newClientRequestFields(req *http.Request) logrus.Fields {
 		"http.url.path":             req.URL.Path,
 		"http.request.length_bytes": req.ContentLength,
 	}
-	for k, v := range http_ctxtags.ExtractOutbound(req).Values() {
+
+	for k, v := range defaultRequestFields(req) {
 		fields[k] = v
 	}
+
 	return fields
 }
