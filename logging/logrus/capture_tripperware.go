@@ -27,6 +27,7 @@ func ContentCaptureTripperware(entry *logrus.Entry, decider http_logging.Content
 				return next.RoundTrip(req)
 			}
 			fields := newClientRequestFields(req)
+
 			if err := captureTripperwareRequestContent(req, entry.WithFields(fields)); err != nil {
 				return nil, err // errors reading GetBody and other problems on client side
 			}

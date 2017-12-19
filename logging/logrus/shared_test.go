@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
-	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/improbable-eng/go-httpwares/testing"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -36,8 +35,8 @@ type loggingHandler struct {
 }
 
 func (a *loggingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	assert.NotNil(a.T, ctxlogrus.Extract(req.Context()), "handlers must have access to the loggermust have ")
-	http_ctxtags.ExtractInbound(req).Set("custom_tags.string", "something").Set("custom_tags.int", 1337)
+	assert.NotNil(a.T, ctxlogrus.Extract(req.Context()), "handlers must have access to the logger")
+	ctxlogrus.AddFields(req.Context(), logrus.Fields{"custom_tags.string": "something", "custom_tags.int": 1337})
 	ctxlogrus.Extract(req.Context()).Warningf("handler_log")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }
@@ -132,7 +131,7 @@ func (s *logrusBaseTestSuite) makeSuccessfulRequestWithAssertions(req *http.Requ
 	require.Len(s.T(), msgs, expectedLogMessages, "this call should result in a different number of log statments")
 	for _, m := range msgs {
 		assert.Contains(s.T(), m, `"span.kind": "`+expectedKind+`"`, "all lines must contain indicator of being the right kind call")
-		assert.Contains(s.T(), m, `"http.host": "`+req.URL.Host+`"`, "all lines must contain http.host from http_ctxtags")
+		assert.Contains(s.T(), m, `"http.host": "`+req.URL.Host+`"`, "all lines must contain http.host")
 		assert.Contains(s.T(), m, `"http.url.path": "`+req.URL.Path+`"`, "all lines must contain method name")
 	}
 	return msgs

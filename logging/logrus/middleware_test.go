@@ -1,6 +1,3 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 package http_logrus_test
 
 import (
@@ -12,7 +9,6 @@ import (
 
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/logging/logrus"
-	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -35,9 +31,8 @@ func TestLogrusMiddlewareSuite(t *testing.T) {
 	s := &logrusMiddlewareTestSuite{newLogrusBaseTestSuite(t)}
 	// In this suite we have all the Middleware, but no Tripperware.
 	s.WaresTestSuite.ServerMiddleware = []httpwares.Middleware{
-		http_ctxtags.Middleware("my_service"),
 		http_logrus.Middleware(
-			logrus.NewEntry(s.logrusBaseTestSuite.logger),
+			logrus.NewEntry(s.logrusBaseTestSuite.logger).WithField("http.handler.group", "my_service"),
 			http_logrus.WithLevels(customMiddlewareCodeToLevel),
 			http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
 			http_logrus.WithResponseBodyCapture(responseCaptureDeciderForTest),

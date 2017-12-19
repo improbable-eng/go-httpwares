@@ -1,6 +1,3 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 package http_logrus_test
 
 import (
@@ -17,7 +14,6 @@ import (
 
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/logging/logrus"
-	"github.com/improbable-eng/go-httpwares/tags"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,12 +40,10 @@ func TestLogrusContentCaptureSuite(t *testing.T) {
 	s.logrusBaseTestSuite.logger.Level = logrus.DebugLevel // most of our log statements are on debug level.
 	// In this suite we have all the Tripperware, but no Middleware.
 	s.WaresTestSuite.ServerMiddleware = []httpwares.Middleware{
-		http_ctxtags.Middleware("somegroup"),
-		http_logrus.Middleware(logrus.NewEntry(nullLogger)),
+		http_logrus.Middleware(logrus.NewEntry(nullLogger).WithField("http.handler.group", "somegroup")),
 		http_logrus.ContentCaptureMiddleware(logrus.NewEntry(s.logger), alwaysOnDecider),
 	}
 	s.WaresTestSuite.ClientTripperware = []httpwares.Tripperware{
-		http_ctxtags.Tripperware(),
 		http_logrus.ContentCaptureTripperware(logrus.NewEntry(s.logger), alwaysOnDecider),
 	}
 	suite.Run(t, s)
@@ -67,7 +61,7 @@ func (s *logrusContentCaptureSuite) getServerAndClientLogs(req *http.Request, ex
 	msgs := s.getOutputJSONs()
 	require.Len(s.T(), msgs, expectedClient+expectedServer, "this call should result in a different number of log statments")
 	for _, m := range msgs {
-		assert.Contains(s.T(), m, `"http.host": "`+req.URL.Host+`"`, "all lines must contain http.host from http_ctxtags")
+		assert.Contains(s.T(), m, `"http.host": "`+req.URL.Host+`"`, "all lines must contain http.host")
 		assert.Contains(s.T(), m, `"http.url.path": "`+req.URL.Path+`"`, "all lines must contain method name")
 		assert.Contains(s.T(), m, `"level": "info"`, "body captures captures should be logged as info")
 		if strings.Contains(m, `"span.kind": "server"`) {
