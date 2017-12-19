@@ -33,6 +33,12 @@ func TestLogrusMiddlewareSuite(t *testing.T) {
 	s.WaresTestSuite.ServerMiddleware = []httpwares.Middleware{
 		http_logrus.Middleware(
 			logrus.NewEntry(s.logrusBaseTestSuite.logger).WithField("http.handler.group", "my_service"),
+			http_logrus.WithDecider(func(w httpwares.WrappedResponseWriter, r *http.Request) bool {
+				if r.URL.Path == "/blah" {
+					return false
+				}
+				return true
+			}),
 			http_logrus.WithLevels(customMiddlewareCodeToLevel),
 			http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
 			http_logrus.WithResponseBodyCapture(responseCaptureDeciderForTest),
@@ -95,4 +101,14 @@ func (s *logrusMiddlewareTestSuite) TestPingError_WithCustomLevels() {
 		assert.Contains(s.T(), m, fmt.Sprintf(`"http.status": %d`, tcase.code), "all lines must contain method name")
 		assert.Contains(s.T(), m, fmt.Sprintf(`"level": "%s"`, tcase.level.String()), tcase.msg)
 	}
+}
+
+func (s *logrusMiddlewareTestSuite) TestPing_WithNoEndLogging() {
+	req, _ := http.NewRequest("GET", "https://something.local/blah", nil)
+	msgs := s.makeSuccessfulRequestWithAssertions(req, 1, "server")
+
+	assert.Contains(s.T(), msgs[0], `"custom_tags.string": "something"`, "all lines must contain `custom_tags.string` set by AddFields")
+	assert.Contains(s.T(), msgs[0], `"custom_tags.int": 1337`, "all lines must contain `custom_tags.int` set by AddFields")
+	assert.Contains(s.T(), msgs[0], `"level": "warning"`, "warningf handler myst be logged as this..")
+	assert.Contains(s.T(), msgs[0], `"msg": "handler_log"`, "handler's message must contain user message")
 }

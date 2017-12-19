@@ -91,14 +91,17 @@ Please see examples and tests for examples of use.
 * [func Middleware(entry \*logrus.Entry, opts ...Option) httpwares.Middleware](#Middleware)
 * [func Tripperware(entry \*logrus.Entry, opts ...Option) httpwares.Tripperware](#Tripperware)
 * [type CodeToLevel](#CodeToLevel)
+* [type Decider](#Decider)
 * [type Option](#Option)
   * [func WithConnectivityErrorLevel(level logrus.Level) Option](#WithConnectivityErrorLevel)
+  * [func WithDecider(f Decider) Option](#WithDecider)
   * [func WithLevels(f CodeToLevel) Option](#WithLevels)
   * [func WithRequestBodyCapture(deciderFunc func(r \*http.Request) bool) Option](#WithRequestBodyCapture)
   * [func WithResponseBodyCapture(deciderFunc func(r \*http.Request, status int) bool) Option](#WithResponseBodyCapture)
 
 #### <a name="pkg-examples">Examples</a>
 * [Middleware](#example_Middleware)
+* [WithDecider](#example_WithDecider)
 
 #### <a name="pkg-files">Package files</a>
 [capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
@@ -146,13 +149,13 @@ The body will be recorded as a separate log message. Body of `application/json` 
 http.request.body_json (in structured JSON form) and others will be captured as http.request.body_raw logrus field
 (raw base64-encoded value).
 
-## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L99)
+## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L112)
 ``` go
 func DefaultMiddlewareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultMiddlewareCodeToLevel is the default of a mapper between HTTP server-side status codes and logrus log levels.
 
-## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L112)
+## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L125)
 ``` go
 func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
 ```
@@ -193,24 +196,54 @@ Tripperware is a server-side http ware for logging using logrus.
 This tripperware *does not* propagate a context-based logger, but act as a logger of requests.
 This includes logging of errors.
 
-## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L48)
+## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L51)
 ``` go
 type CodeToLevel func(httpStatusCode int) logrus.Level
 ```
 CodeToLevel user functions define the mapping between HTTP status codes and logrus log levels.
 
-## <a name="Option">type</a> [Option](./options.go#L45)
+## <a name="Decider">type</a> [Decider](./options.go#L109)
+``` go
+type Decider func(w httpwares.WrappedResponseWriter, r *http.Request) bool
+```
+Decider function defines rules for suppressing any interceptor logs
+
+## <a name="Option">type</a> [Option](./options.go#L48)
 ``` go
 type Option func(*options)
 ```
 
-### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L61)
+### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L64)
 ``` go
 func WithConnectivityErrorLevel(level logrus.Level) Option
 ```
 WithConnectivityErrorLevel customizes
 
-### <a name="WithLevels">func</a> [WithLevels](./options.go#L54)
+### <a name="WithDecider">func</a> [WithDecider](./options.go#L102)
+``` go
+func WithDecider(f Decider) Option
+```
+WithDecider customizes the function for deciding if the middleware logs at the end of the request.
+
+#### Example:
+
+<details>
+<summary>Click to expand code.</summary>
+
+```go
+Middleware(logrus.WithField("decider", "test"),
+    WithDecider(func(w httpwares.WrappedResponseWriter, r *http.Request) bool {
+        if r.URL.Path == "/nolog" {
+            // do not want to log request to this endpoint
+            return false
+        }
+        return true
+    }),
+)
+```
+
+</details>
+### <a name="WithLevels">func</a> [WithLevels](./options.go#L57)
 ``` go
 func WithLevels(f CodeToLevel) Option
 ```
@@ -219,7 +252,7 @@ WithLevels customizes the function that maps HTTP client or server side status c
 By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware, and `DefaultTripperwareCodeToLevel`
 is used for client-side tripperware.
 
-### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L79)
+### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L82)
 ``` go
 func WithRequestBodyCapture(deciderFunc func(r *http.Request) bool) Option
 ```
@@ -236,7 +269,7 @@ For middleware, only requests with a set Content-Length will be captured, with n
 
 This option creates a copy of the body per request, so please use with care.
 
-### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L92)
+### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L95)
 ``` go
 func WithResponseBodyCapture(deciderFunc func(r *http.Request, status int) bool) Option
 ```
