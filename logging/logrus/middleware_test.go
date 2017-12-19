@@ -60,20 +60,25 @@ type logrusMiddlewareTestSuite struct {
 
 func (s *logrusMiddlewareTestSuite) TestPing_WithCustomTags() {
 	req, _ := http.NewRequest("GET", "https://something.local/someurl", nil)
+	req.Header.Set("User-Agent", "testagent")
+	req.Header.Set("referer", "http://improbable.io/")
 	req.Header.Set("x-test-data", "test")
 	msgs := s.makeSuccessfulRequestWithAssertions(req, 2, "server")
 
-	// Assert custom tags exist
 	for _, m := range msgs {
 		assert.Contains(s.T(), m, `"http.request.custom": "test"`, "all lines must contain fields added in using request field extractor")
 		assert.Contains(s.T(), m, `"custom_tags.string": "something"`, "all lines must contain `custom_tags.string` set by AddFields")
 		assert.Contains(s.T(), m, `"custom_tags.int": 1337`, "all lines must contain `custom_tags.int` set by AddFields")
+		assert.Contains(s.T(), m, `"http.request.method": "GET"`, "all lines must contain the http verb")
+		assert.Contains(s.T(), m, `"http.request.referer": "http://improbable.io/"`, "all lines must contain the referer if present")
+		assert.Contains(s.T(), m, `"http.request.user_agent": "testagent"`, "all lines must contain the user agent")
 	}
 	assert.Contains(s.T(), msgs[0], `"level": "warning"`, "warningf handler myst be logged as this..")
 	assert.Contains(s.T(), msgs[0], `"msg": "handler_log"`, "handler's message must contain user message")
 	assert.Contains(s.T(), msgs[1], `"msg": "handled"`, "interceptor message must contain string")
 	assert.Contains(s.T(), msgs[1], `"level": "info"`, "~200 status codes must be logged as info by default.")
 	assert.Contains(s.T(), msgs[1], `"http.time_ms":`, "interceptor log statement should contain execution time")
+	assert.Contains(s.T(), msgs[1], `"http.response.length_bytes":`, "interceptor log statement should contain response size")
 	assert.Contains(s.T(), msgs[1], `"http.response.custom": 1234`, "all lines must contain fields added in using response field extractor")
 }
 
@@ -108,8 +113,9 @@ func (s *logrusMiddlewareTestSuite) TestPingError_WithCustomLevels() {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("https://something.local/someurl?code=%d", tcase.code), nil)
 		msgs := s.makeSuccessfulRequestWithAssertions(req, 2, "server")
 		m := msgs[1]
-		assert.Contains(s.T(), m, fmt.Sprintf(`"http.status": %d`, tcase.code), "all lines must contain method name")
+		assert.Contains(s.T(), m, fmt.Sprintf(`"http.response.status": %d`, tcase.code), "all lines must contain method name")
 		assert.Contains(s.T(), m, fmt.Sprintf(`"level": "%s"`, tcase.level.String()), tcase.msg)
+		assert.Contains(s.T(), m, `"http.response.length_bytes":`, "interceptor log statement should contain response size")
 	}
 }
 
