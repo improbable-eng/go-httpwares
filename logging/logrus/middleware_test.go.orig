@@ -33,18 +33,20 @@ func TestLogrusMiddlewareSuite(t *testing.T) {
 	s.WaresTestSuite.ServerMiddleware = []httpwares.Middleware{
 		http_logrus.Middleware(
 			logrus.NewEntry(s.logrusBaseTestSuite.logger).WithField("http.handler.group", "my_service"),
+<<<<<<< HEAD
 			http_logrus.WithDecider(func(w httpwares.WrappedResponseWriter, r *http.Request) bool {
 				return r.URL.Path != "/blah"
-			}),
+=======
 			http_logrus.WithRequestFieldExtractor(func(req *http.Request) map[string]interface{} {
 				return map[string]interface{}{
 					"http.request.custom": "test",
 				}
 			}),
-			http_logrus.WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter) map[string]interface{} {
+			http_logrus.WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter, req *http.Request) map[string]interface{} {
 				return map[string]interface{}{
 					"http.response.custom": 1234,
 				}
+>>>>>>> add extra fields to logger on start and end of http request via middleware
 			}),
 			http_logrus.WithLevels(customMiddlewareCodeToLevel),
 			http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),

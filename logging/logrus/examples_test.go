@@ -31,7 +31,7 @@ func ExampleWithRequestFieldExtractor() {
 
 func ExampleWithResponseFieldExtractor() {
 	Middleware(logrus.WithField("foo", "bar"),
-		WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter, req *http.Request) map[string]interface{} {
+		WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter) map[string]interface{} {
 			return map[string]interface{}{
 				"http.response.customFieldC": 1234,
 				"http.response.customFieldD": "blah",

@@ -5,11 +5,12 @@ import (
 
 	"net/http"
 
+	"net"
+	"strings"
+
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
 	"github.com/sirupsen/logrus"
-	"net"
-	"strings"
 )
 
 var (
@@ -22,26 +23,24 @@ var (
 // All handlers will have a Logrus logger in their context, which can be fetched using `ctxlogrus.Extract`.
 func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 	return func(nextHandler http.Handler) http.Handler {
-		o := evaluateMiddlewareOpts(opts)
+		options := evaluateMiddlewareOpts(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := httpwares.WrapResponseWriter(resp)
 
-			requestFields := newServerRequestFields(req)
-			for k, v := range o.requestFieldExtractor(req) {
-				requestFields[k] = v
-			}
-
+			requestFields := appendFields(newServerRequestFields(req), options.requestFieldExtractor(req))
 			newEntry := entry.WithFields(requestFields)
 			newReq := req.WithContext(ctxlogrus.ToContext(req.Context(), newEntry))
 			var capture *responseCapture
 			wrappedResp.ObserveWriteHeader(func(w httpwares.WrappedResponseWriter, code int) {
-				if o.responseCaptureFunc(req, code) {
+				if options.responseCaptureFunc(req, code) {
 					capture = captureMiddlewareResponseContent(w, ctxlogrus.Extract(newReq.Context()))
 				}
 			})
+
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, newReq)
 
+<<<<<<< HEAD
 			if o.shouldLog != nil && !o.shouldLog(wrappedResp, newReq) {
 				return
 			}
@@ -56,12 +55,31 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			}
 
 			level := o.levelFunc(wrappedResp.StatusCode())
+=======
+			postCallFields := appendFields(responseFields(wrappedResp, startTime), options.responseFieldExtractor(wrappedResp))
+			level := options.levelFunc(wrappedResp.StatusCode())
+>>>>>>> removing request from responseFieldExtractor
 			levelLogf(
 				ctxlogrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
 				"handled")
 		})
 	}
+}
+
+func appendFields(a, b logrus.Fields) logrus.Fields {
+	for k, v := range b {
+		a[k] = v
+	}
+	return a
+}
+
+func responseFields(wrappedResp httpwares.WrappedResponseWriter, startTime time.Time) logrus.Fields {
+	postCallFields := logrus.Fields{
+		"http.status":  wrappedResp.StatusCode(),
+		"http.time_ms": timeDiffToMilliseconds(startTime),
+	}
+	return postCallFields
 }
 
 func newServerRequestFields(req *http.Request) logrus.Fields {
@@ -87,6 +105,7 @@ func newServerRequestFields(req *http.Request) logrus.Fields {
 			fields["peer.address"] = addr
 		}
 	}
+
 	return fields
 }
 
