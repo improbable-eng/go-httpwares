@@ -40,25 +40,12 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, newReq)
 
-<<<<<<< HEAD
-			if o.shouldLog != nil && !o.shouldLog(wrappedResp, newReq) {
+			if options.shouldLog != nil && !options.shouldLog(wrappedResp, newReq) {
 				return
 			}
 
-			capture.finish() // captureResponse has a nil check, this can be nil
-			postCallFields := logrus.Fields{
-				"http.status":  wrappedResp.StatusCode(),
-				"http.time_ms": timeDiffToMilliseconds(startTime),
-			}
-			for k, v := range o.responseFieldExtractor(wrappedResp, newReq) {
-				postCallFields[k] = v
-			}
-
-			level := o.levelFunc(wrappedResp.StatusCode())
-=======
 			postCallFields := appendFields(responseFields(wrappedResp, startTime), options.responseFieldExtractor(wrappedResp))
 			level := options.levelFunc(wrappedResp.StatusCode())
->>>>>>> removing request from responseFieldExtractor
 			levelLogf(
 				ctxlogrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
