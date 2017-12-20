@@ -35,8 +35,12 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			})
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, newReq)
-			capture.finish() // captureResponse has a nil check, this can be nil
 
+			if o.shouldLog != nil && !o.shouldLog(wrappedResp, newReq) {
+				return
+			}
+
+			capture.finish() // captureResponse has a nil check, this can be nil
 			postCallFields := logrus.Fields{
 				"http.status":  wrappedResp.StatusCode(),
 				"http.time_ms": timeDiffToMilliseconds(startTime),
