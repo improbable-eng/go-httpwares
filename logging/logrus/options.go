@@ -13,7 +13,6 @@ var (
 		levelForConnectivityError: logrus.WarnLevel,
 		requestCaptureFunc:        func(r *http.Request) bool { return false },
 		responseCaptureFunc:       func(r *http.Request, status int) bool { return false },
-		shouldLog:                 defaultDeciderMethod,
 	}
 )
 
@@ -130,8 +129,4 @@ func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level {
 	} else {
 		return logrus.WarnLevel
 	}
-}
-
-func defaultDeciderMethod(w httpwares.WrappedResponseWriter, r *http.Request) bool {
-	return true
 }

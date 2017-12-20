@@ -36,7 +36,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, newReq)
 
-			if !o.shouldLog(wrappedResp, newReq) {
+			if o.shouldLog != nil && !o.shouldLog(wrappedResp, newReq) {
 				return
 			}
 
