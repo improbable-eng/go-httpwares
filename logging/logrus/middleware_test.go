@@ -34,10 +34,7 @@ func TestLogrusMiddlewareSuite(t *testing.T) {
 		http_logrus.Middleware(
 			logrus.NewEntry(s.logrusBaseTestSuite.logger).WithField("http.handler.group", "my_service"),
 			http_logrus.WithDecider(func(w httpwares.WrappedResponseWriter, r *http.Request) bool {
-				if r.URL.Path == "/blah" {
-					return false
-				}
-				return true
+				return r.URL.Path != "/blah"
 			}),
 			http_logrus.WithLevels(customMiddlewareCodeToLevel),
 			http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
