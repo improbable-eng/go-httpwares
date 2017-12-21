@@ -64,8 +64,8 @@ func appendFields(a, b logrus.Fields) logrus.Fields {
 
 func responseFields(wrappedResp httpwares.WrappedResponseWriter, startTime time.Time) logrus.Fields {
 	postCallFields := logrus.Fields{
-		"http.time_ms": timeDiffToMilliseconds(startTime),
-		"http.response.status":  wrappedResp.StatusCode(),
+		"http.time_ms":               timeDiffToMilliseconds(startTime),
+		"http.response.status":       wrappedResp.StatusCode(),
 		"http.response.length_bytes": wrappedResp.MessageLength(),
 	}
 	return postCallFields
