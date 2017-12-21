@@ -38,7 +38,7 @@ func TestLogrusMiddlewareSuite(t *testing.T) {
 			}),
 			http_logrus.WithRequestFieldExtractor(func(req *http.Request) map[string]interface{} {
 				return map[string]interface{}{
-					"http.request.custom": "test",
+					"http.request.custom": req.Header.Get("x-test-data"),
 				}
 			}),
 			http_logrus.WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter) map[string]interface{} {
@@ -60,6 +60,7 @@ type logrusMiddlewareTestSuite struct {
 
 func (s *logrusMiddlewareTestSuite) TestPing_WithCustomTags() {
 	req, _ := http.NewRequest("GET", "https://something.local/someurl", nil)
+	req.Header.Set("x-test-data", "test")
 	msgs := s.makeSuccessfulRequestWithAssertions(req, 2, "server")
 
 	// Assert custom tags exist

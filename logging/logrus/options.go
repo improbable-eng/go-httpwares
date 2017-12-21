@@ -137,22 +137,22 @@ func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level {
 	}
 }
 
-// WithRequestFieldExtractor adds a field, allowing you to customize what fields get prepopulated from the request.
+// WithRequestFieldExtractor adds a field, allowing you to customize what fields get populated from the request.
 func WithRequestFieldExtractor(f RequestFieldExtractorFunc) Option {
 	return func(o *options) {
 		o.requestFieldExtractor = f
 	}
 }
 
-// WithRequestFieldExtractor adds a field, allowing you to customize what fields get prepopulated from the request.
+// WithRequestFieldExtractor adds a field, allowing you to customize what fields get populated from the response.
 func WithResponseFieldExtractor(f ResponseFieldExtractorFunc) Option {
 	return func(o *options) {
 		o.responseFieldExtractor = f
 	}
 }
 
-// RequestFieldExtractorFunc is a signature of user-customizeable functions for extracting log fields from requests.
+// RequestFieldExtractorFunc is a signature of user-customizable functions for extracting log fields from requests.
 type RequestFieldExtractorFunc func(req *http.Request) map[string]interface{}
 
-// ResponseFieldExtractorFunc is a signature of user-customizeable functions for extracting log fields from responses.
+// ResponseFieldExtractorFunc is a signature of user-customizable functions for extracting log fields from responses.
 type ResponseFieldExtractorFunc func(res httpwares.WrappedResponseWriter) map[string]interface{}

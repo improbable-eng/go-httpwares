@@ -22,8 +22,8 @@ func ExampleWithRequestFieldExtractor() {
 	Middleware(logrus.WithField("foo", "bar"),
 		WithRequestFieldExtractor(func(req *http.Request) map[string]interface{} {
 			return map[string]interface{}{
-				"http.request.customFieldA": "test",
-				"http.request.customFieldB": true,
+				"http.request.customFieldA": req.Header.Get("x-custom-header"),
+				"http.request.customFieldB": req.Header.Get("x-another-custom-header"),
 			}
 		}),
 	)
@@ -33,8 +33,7 @@ func ExampleWithResponseFieldExtractor() {
 	Middleware(logrus.WithField("foo", "bar"),
 		WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter) map[string]interface{} {
 			return map[string]interface{}{
-				"http.response.customFieldC": 1234,
-				"http.response.customFieldD": "blah",
+				"http.response.customFieldC": res.StatusCode(),
 			}
 		}),
 	)
