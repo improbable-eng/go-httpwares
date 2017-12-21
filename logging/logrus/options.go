@@ -13,6 +13,10 @@ var (
 		levelForConnectivityError: logrus.WarnLevel,
 		requestCaptureFunc:        func(r *http.Request) bool { return false },
 		responseCaptureFunc:       func(r *http.Request, status int) bool { return false },
+		requestFieldExtractor:     func(req *http.Request) map[string]interface{} { return map[string]interface{}{} },
+		responseFieldExtractor: func(res httpwares.WrappedResponseWriter) map[string]interface{} {
+			return map[string]interface{}{}
+		},
 	}
 )
 
@@ -21,6 +25,8 @@ type options struct {
 	levelForConnectivityError logrus.Level
 	requestCaptureFunc        func(r *http.Request) bool
 	responseCaptureFunc       func(r *http.Request, status int) bool
+	requestFieldExtractor     RequestFieldExtractorFunc
+	responseFieldExtractor    ResponseFieldExtractorFunc
 	shouldLog                 Decider
 }
 
@@ -130,3 +136,23 @@ func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level {
 		return logrus.WarnLevel
 	}
 }
+
+// WithRequestFieldExtractor adds a field, allowing you to customize what fields get populated from the request.
+func WithRequestFieldExtractor(f RequestFieldExtractorFunc) Option {
+	return func(o *options) {
+		o.requestFieldExtractor = f
+	}
+}
+
+// WithRequestFieldExtractor adds a field, allowing you to customize what fields get populated from the response.
+func WithResponseFieldExtractor(f ResponseFieldExtractorFunc) Option {
+	return func(o *options) {
+		o.responseFieldExtractor = f
+	}
+}
+
+// RequestFieldExtractorFunc is a signature of user-customizable functions for extracting log fields from requests.
+type RequestFieldExtractorFunc func(req *http.Request) map[string]interface{}
+
+// ResponseFieldExtractorFunc is a signature of user-customizable functions for extracting log fields from responses.
+type ResponseFieldExtractorFunc func(res httpwares.WrappedResponseWriter) map[string]interface{}

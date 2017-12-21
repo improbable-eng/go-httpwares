@@ -36,6 +36,16 @@ func TestLogrusMiddlewareSuite(t *testing.T) {
 			http_logrus.WithDecider(func(w httpwares.WrappedResponseWriter, r *http.Request) bool {
 				return r.URL.Path != "/blah"
 			}),
+			http_logrus.WithRequestFieldExtractor(func(req *http.Request) map[string]interface{} {
+				return map[string]interface{}{
+					"http.request.custom": req.Header.Get("x-test-data"),
+				}
+			}),
+			http_logrus.WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter) map[string]interface{} {
+				return map[string]interface{}{
+					"http.response.custom": 1234,
+				}
+			}),
 			http_logrus.WithLevels(customMiddlewareCodeToLevel),
 			http_logrus.WithRequestBodyCapture(requestCaptureDeciderForTest),
 			http_logrus.WithResponseBodyCapture(responseCaptureDeciderForTest),
@@ -50,10 +60,12 @@ type logrusMiddlewareTestSuite struct {
 
 func (s *logrusMiddlewareTestSuite) TestPing_WithCustomTags() {
 	req, _ := http.NewRequest("GET", "https://something.local/someurl", nil)
+	req.Header.Set("x-test-data", "test")
 	msgs := s.makeSuccessfulRequestWithAssertions(req, 2, "server")
 
 	// Assert custom tags exist
 	for _, m := range msgs {
+		assert.Contains(s.T(), m, `"http.request.custom": "test"`, "all lines must contain fields added in using request field extractor")
 		assert.Contains(s.T(), m, `"custom_tags.string": "something"`, "all lines must contain `custom_tags.string` set by AddFields")
 		assert.Contains(s.T(), m, `"custom_tags.int": 1337`, "all lines must contain `custom_tags.int` set by AddFields")
 	}
@@ -62,6 +74,7 @@ func (s *logrusMiddlewareTestSuite) TestPing_WithCustomTags() {
 	assert.Contains(s.T(), msgs[1], `"msg": "handled"`, "interceptor message must contain string")
 	assert.Contains(s.T(), msgs[1], `"level": "info"`, "~200 status codes must be logged as info by default.")
 	assert.Contains(s.T(), msgs[1], `"http.time_ms":`, "interceptor log statement should contain execution time")
+	assert.Contains(s.T(), msgs[1], `"http.response.custom": 1234`, "all lines must contain fields added in using response field extractor")
 }
 
 func (s *logrusMiddlewareTestSuite) TestPingError_WithCustomLevels() {

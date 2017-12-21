@@ -97,11 +97,16 @@ Please see examples and tests for examples of use.
   * [func WithDecider(f Decider) Option](#WithDecider)
   * [func WithLevels(f CodeToLevel) Option](#WithLevels)
   * [func WithRequestBodyCapture(deciderFunc func(r \*http.Request) bool) Option](#WithRequestBodyCapture)
+  * [func WithRequestFieldExtractor(f RequestFieldExtractorFunc) Option](#WithRequestFieldExtractor)
   * [func WithResponseBodyCapture(deciderFunc func(r \*http.Request, status int) bool) Option](#WithResponseBodyCapture)
+  * [func WithResponseFieldExtractor(f ResponseFieldExtractorFunc) Option](#WithResponseFieldExtractor)
+* [type RequestFieldExtractorFunc](#RequestFieldExtractorFunc)
+* [type ResponseFieldExtractorFunc](#ResponseFieldExtractorFunc)
 
 #### <a name="pkg-examples">Examples</a>
 * [Middleware](#example_Middleware)
-* [WithDecider](#example_WithDecider)
+* [WithRequestFieldExtractor](#example_WithRequestFieldExtractor)
+* [WithResponseFieldExtractor](#example_WithResponseFieldExtractor)
 
 #### <a name="pkg-files">Package files</a>
 [capture_middleware.go](./capture_middleware.go) [capture_tripperware.go](./capture_tripperware.go) [doc.go](./doc.go) [get_body_go18.go](./get_body_go18.go) [httplogger.go](./httplogger.go) [middleware.go](./middleware.go) [options.go](./options.go) [tripperware.go](./tripperware.go) 
@@ -149,19 +154,19 @@ The body will be recorded as a separate log message. Body of `application/json` 
 http.request.body_json (in structured JSON form) and others will be captured as http.request.body_raw logrus field
 (raw base64-encoded value).
 
-## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L111)
+## <a name="DefaultMiddlewareCodeToLevel">func</a> [DefaultMiddlewareCodeToLevel](./options.go#L117)
 ``` go
 func DefaultMiddlewareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultMiddlewareCodeToLevel is the default of a mapper between HTTP server-side status codes and logrus log levels.
 
-## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L124)
+## <a name="DefaultTripperwareCodeToLevel">func</a> [DefaultTripperwareCodeToLevel](./options.go#L130)
 ``` go
 func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultTripperwareCodeToLevel is the default of a mapper between HTTP client-side status codes and logrus log levels.
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L23)
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L24)
 ``` go
 func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware
 ```
@@ -196,54 +201,36 @@ Tripperware is a server-side http ware for logging using logrus.
 This tripperware *does not* propagate a context-based logger, but act as a logger of requests.
 This includes logging of errors.
 
-## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L50)
+## <a name="CodeToLevel">type</a> [CodeToLevel](./options.go#L56)
 ``` go
 type CodeToLevel func(httpStatusCode int) logrus.Level
 ```
 CodeToLevel user functions define the mapping between HTTP status codes and logrus log levels.
 
-## <a name="Decider">type</a> [Decider](./options.go#L108)
+## <a name="Decider">type</a> [Decider](./options.go#L114)
 ``` go
 type Decider func(w httpwares.WrappedResponseWriter, r *http.Request) bool
 ```
 Decider function defines rules for suppressing any interceptor logs
 
-## <a name="Option">type</a> [Option](./options.go#L47)
+## <a name="Option">type</a> [Option](./options.go#L53)
 ``` go
 type Option func(*options)
 ```
 
-### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L63)
+### <a name="WithConnectivityErrorLevel">func</a> [WithConnectivityErrorLevel](./options.go#L69)
 ``` go
 func WithConnectivityErrorLevel(level logrus.Level) Option
 ```
 WithConnectivityErrorLevel customizes
 
-### <a name="WithDecider">func</a> [WithDecider](./options.go#L101)
+### <a name="WithDecider">func</a> [WithDecider](./options.go#L107)
 ``` go
 func WithDecider(f Decider) Option
 ```
 WithDecider customizes the function for deciding if the middleware logs at the end of the request.
 
-#### Example:
-
-<details>
-<summary>Click to expand code.</summary>
-
-```go
-Middleware(logrus.WithField("decider", "test"),
-    WithDecider(func(w httpwares.WrappedResponseWriter, r *http.Request) bool {
-        if r.URL.Path == "/nolog" {
-            // do not want to log request to this endpoint
-            return false
-        }
-        return true
-    }),
-)
-```
-
-</details>
-### <a name="WithLevels">func</a> [WithLevels](./options.go#L56)
+### <a name="WithLevels">func</a> [WithLevels](./options.go#L62)
 ``` go
 func WithLevels(f CodeToLevel) Option
 ```
@@ -252,7 +239,7 @@ WithLevels customizes the function that maps HTTP client or server side status c
 By default `DefaultMiddlewareCodeToLevel` is used for server-side middleware, and `DefaultTripperwareCodeToLevel`
 is used for client-side tripperware.
 
-### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L81)
+### <a name="WithRequestBodyCapture">func</a> [WithRequestBodyCapture](./options.go#L87)
 ``` go
 func WithRequestBodyCapture(deciderFunc func(r *http.Request) bool) Option
 ```
@@ -269,7 +256,30 @@ For middleware, only requests with a set Content-Length will be captured, with n
 
 This option creates a copy of the body per request, so please use with care.
 
-### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L94)
+### <a name="WithRequestFieldExtractor">func</a> [WithRequestFieldExtractor](./options.go#L141)
+``` go
+func WithRequestFieldExtractor(f RequestFieldExtractorFunc) Option
+```
+WithRequestFieldExtractor adds a field, allowing you to customize what fields get populated from the request.
+
+#### Example:
+
+<details>
+<summary>Click to expand code.</summary>
+
+```go
+Middleware(logrus.WithField("foo", "bar"),
+    WithRequestFieldExtractor(func(req *http.Request) map[string]interface{} {
+        return map[string]interface{}{
+            "http.request.customFieldA": req.Header.Get("x-custom-header"),
+            "http.request.customFieldB": req.Header.Get("x-another-custom-header"),
+        }
+    }),
+)
+```
+
+</details>
+### <a name="WithResponseBodyCapture">func</a> [WithResponseBodyCapture](./options.go#L100)
 ``` go
 func WithResponseBodyCapture(deciderFunc func(r *http.Request, status int) bool) Option
 ```
@@ -280,6 +290,41 @@ http.response.body_json (in structured JSON form) and others will be captured as
 (raw base64-encoded value).
 
 Only responses with Content-Length will be captured, with non-default Transfer-Encoding not being supported.
+
+### <a name="WithResponseFieldExtractor">func</a> [WithResponseFieldExtractor](./options.go#L148)
+``` go
+func WithResponseFieldExtractor(f ResponseFieldExtractorFunc) Option
+```
+WithRequestFieldExtractor adds a field, allowing you to customize what fields get populated from the response.
+
+#### Example:
+
+<details>
+<summary>Click to expand code.</summary>
+
+```go
+Middleware(logrus.WithField("foo", "bar"),
+    WithResponseFieldExtractor(func(res httpwares.WrappedResponseWriter) map[string]interface{} {
+        return map[string]interface{}{
+            "http.response.customFieldC": res.StatusCode(),
+        }
+    }),
+)
+```
+
+</details>
+
+## <a name="RequestFieldExtractorFunc">type</a> [RequestFieldExtractorFunc](./options.go#L155)
+``` go
+type RequestFieldExtractorFunc func(req *http.Request) map[string]interface{}
+```
+RequestFieldExtractorFunc is a signature of user-customizable functions for extracting log fields from requests.
+
+## <a name="ResponseFieldExtractorFunc">type</a> [ResponseFieldExtractorFunc](./options.go#L158)
+``` go
+type ResponseFieldExtractorFunc func(res httpwares.WrappedResponseWriter) map[string]interface{}
+```
+ResponseFieldExtractorFunc is a signature of user-customizable functions for extracting log fields from responses.
 
 - - -
 Generated by [godoc2ghmd](https://github.com/GandalfUK/godoc2ghmd)
