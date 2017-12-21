@@ -39,6 +39,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 
 			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, newReq)
+			capture.finish() // captureResponse has a nil check, this can be nil
 
 			if options.shouldLog != nil && !options.shouldLog(wrappedResp, newReq) {
 				return
@@ -63,8 +64,9 @@ func appendFields(a, b logrus.Fields) logrus.Fields {
 
 func responseFields(wrappedResp httpwares.WrappedResponseWriter, startTime time.Time) logrus.Fields {
 	postCallFields := logrus.Fields{
-		"http.status":  wrappedResp.StatusCode(),
-		"http.time_ms": timeDiffToMilliseconds(startTime),
+		"http.time_ms":               timeDiffToMilliseconds(startTime),
+		"http.response.status":       wrappedResp.StatusCode(),
+		"http.response.length_bytes": wrappedResp.MessageLength(),
 	}
 	return postCallFields
 }
@@ -74,14 +76,19 @@ func newServerRequestFields(req *http.Request) logrus.Fields {
 	if host == "" {
 		host = req.Host
 	}
+
 	fields := logrus.Fields{
 		"system":                    SystemField,
 		"span.kind":                 "server",
 		"http.url.path":             req.URL.Path,
 		"http.proto_major":          req.ProtoMajor,
-		"http.request.length_bytes": req.ContentLength,
 		"http.host":                 host,
+		"http.request.method":       req.Method,
+		"http.request.user_agent":   req.Header.Get("User-Agent"),
+		"http.request.length_bytes": req.ContentLength,
+		"http.request.referer":      req.Referer(),
 	}
+
 	if addr := req.RemoteAddr; addr != "" {
 		if strings.Contains(addr, ":") {
 			if host, port, err := net.SplitHostPort(addr); err == nil {
