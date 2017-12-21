@@ -86,10 +86,7 @@ func newServerRequestFields(req *http.Request) logrus.Fields {
 		"http.request.method":       req.Method,
 		"http.request.user_agent":   req.Header.Get("User-Agent"),
 		"http.request.length_bytes": req.ContentLength,
-	}
-
-	if req.Referer() != "" {
-		fields["http.request.referer"] = req.Referer()
+		"http.request.referer":      req.Referer(),
 	}
 
 	if addr := req.RemoteAddr; addr != "" {
