@@ -69,7 +69,7 @@ other debugability handlers.
 
 The tripperwares provided in thsi repo are:
  * Monitoring
-   * [monitoring/prometheus](monitoring/prometheus) - [Prometheus](https://prometheus.io/) client-side monitoring broken down by service name
+   * [metrics/prometheus](metrics/prometheus) - [Prometheus](https://prometheus.io/) client-side monitoring broken down by service name
  * Tracing
    * [tracing/debug](tracing/debug) - `/debug/request` page for client-side HTTP request debugging, allowing  you to inspect failed requests, outbound headers, payload sizes etc etc.
    * [tracing/opentracing](tracing/opentracing) - client-side request [Opentracing](http://opentracing.io/) middleware that is tags-aware and supports propagation of traces from server-side middleware
