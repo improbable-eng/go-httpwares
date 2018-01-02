@@ -67,7 +67,7 @@ The crucial package here is again `http_ctxtags`(tags/README.md) as it introduce
 either user-specified or automatically detected from the URL (for external calls), and is used as a key indicator in all
 other debugability handlers.
 
-The tripperwares provided in thsi repo are:
+The tripperwares provided in this repo are:
  * Monitoring
    * [metrics/prometheus](metrics/prometheus) - [Prometheus](https://prometheus.io/) client-side monitoring broken down by service name
  * Tracing
