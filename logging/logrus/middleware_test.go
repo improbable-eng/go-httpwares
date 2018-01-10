@@ -75,7 +75,7 @@ func (s *logrusMiddlewareTestSuite) TestPing_WithCustomTags() {
 	}
 	assert.Contains(s.T(), msgs[0], `"level": "warning"`, "warningf handler myst be logged as this..")
 	assert.Contains(s.T(), msgs[0], `"msg": "handler_log"`, "handler's message must contain user message")
-	assert.Contains(s.T(), msgs[1], `"msg": "handled"`, "interceptor message must contain string")
+	assert.Contains(s.T(), msgs[1], `"msg": "finished HTTP call with code 201 Created"`, "interceptor message must contain string")
 	assert.Contains(s.T(), msgs[1], `"level": "info"`, "~200 status codes must be logged as info by default.")
 	assert.Contains(s.T(), msgs[1], `"http.time_ms":`, "interceptor log statement should contain execution time")
 	assert.Contains(s.T(), msgs[1], `"http.response.length_bytes":`, "interceptor log statement should contain response size")
