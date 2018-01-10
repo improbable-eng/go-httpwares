@@ -1,12 +1,11 @@
 package http_logrus
 
 import (
-	"time"
-
-	"net/http"
-
+	"fmt"
 	"net"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/improbable-eng/go-httpwares"
 	"github.com/improbable-eng/go-httpwares/logging/logrus/ctxlogrus"
@@ -50,7 +49,7 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 			levelLogf(
 				ctxlogrus.Extract(newReq.Context()).WithFields(postCallFields), // re-extract logger from newCtx, as it may have extra fields that changed in the holder.
 				level,
-				"handled")
+				fmt.Sprintf("finished HTTP call with code %d %s", wrappedResp.StatusCode(), http.StatusText(wrappedResp.StatusCode())))
 		})
 	}
 }

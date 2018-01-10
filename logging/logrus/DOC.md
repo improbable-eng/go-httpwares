@@ -166,7 +166,7 @@ func DefaultTripperwareCodeToLevel(httpStatusCode int) logrus.Level
 ```
 DefaultTripperwareCodeToLevel is the default of a mapper between HTTP client-side status codes and logrus log levels.
 
-## <a name="Middleware">func</a> [Middleware](./middleware.go#L24)
+## <a name="Middleware">func</a> [Middleware](./middleware.go#L23)
 ``` go
 func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware
 ```
