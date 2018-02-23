@@ -58,7 +58,7 @@ type logrusMiddlewareTestSuite struct {
 	*logrusBaseTestSuite
 }
 
-func (s *logrusMiddlewareTestSuite) TestPing_WithCustomTags() {
+func (s *logrusMiddlewareTestSuite) TestPing_WithCustomFields() {
 	req, _ := http.NewRequest("GET", "https://something.local/someurl", nil)
 	req.Header.Set("User-Agent", "testagent")
 	req.Header.Set("referer", "http://improbable.io/")
