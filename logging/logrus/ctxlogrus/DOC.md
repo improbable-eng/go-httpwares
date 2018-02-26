@@ -18,6 +18,7 @@ Additional fields can be added to the logger on the context by with the AddField
 
 ## <a name="pkg-imports">Imported Packages</a>
 
+- [github.com/grpc-ecosystem/go-grpc-middleware/tags](https://godoc.org/github.com/grpc-ecosystem/go-grpc-middleware/tags)
 - [github.com/sirupsen/logrus](https://godoc.org/github.com/sirupsen/logrus)
 - [golang.org/x/net/context](https://godoc.org/golang.org/x/net/context)
 
@@ -34,7 +35,7 @@ Additional fields can be added to the logger on the context by with the AddField
 #### <a name="pkg-files">Package files</a>
 [context.go](./context.go) [doc.go](./doc.go) [noop.go](./noop.go) 
 
-## <a name="AddFields">func</a> [AddFields](./context.go#L40)
+## <a name="AddFields">func</a> [AddFields](./context.go#L45)
 ``` go
 func AddFields(ctx context.Context, fields logrus.Fields)
 ```
@@ -53,7 +54,7 @@ ctxlogrus.AddFields(ctx, logrus.Fields{"num": 42})
 
 </details>
 
-## <a name="Extract">func</a> [Extract](./context.go#L25)
+## <a name="Extract">func</a> [Extract](./context.go#L26)
 ``` go
 func Extract(ctx context.Context) *logrus.Entry
 ```
@@ -77,7 +78,7 @@ entry.Info("logging")
 
 </details>
 
-## <a name="ToContext">func</a> [ToContext](./context.go#L53)
+## <a name="ToContext">func</a> [ToContext](./context.go#L58)
 ``` go
 func ToContext(ctx context.Context, entry *logrus.Entry) context.Context
 ```

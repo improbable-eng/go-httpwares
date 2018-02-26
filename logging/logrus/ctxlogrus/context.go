@@ -1,6 +1,7 @@
 package ctxlogrus
 
 import (
+	"github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
@@ -30,6 +31,10 @@ func Extract(ctx context.Context) *logrus.Entry {
 
 	fields := logrus.Fields{}
 	for k, v := range l.fields {
+		fields[k] = v
+	}
+
+	for k, v := range grpc_ctxtags.Extract(ctx).Values() {
 		fields[k] = v
 	}
 
