@@ -31,6 +31,10 @@ func requestDeciderForTesting(req *http.Request) bool {
 	return req.Method == "GET" || req.Method == "PUT"
 }
 
+func responseDiscarderForTesting(resp *http.Response) bool {
+	return resp.StatusCode == failureCode
+}
+
 type failingHandler struct {
 	*testing.T
 	reqCounter uint
@@ -85,6 +89,7 @@ func TestRetryTripperwareSuite(t *testing.T) {
 				http_retry.Tripperware(
 					http_retry.WithMax(5),
 					http_retry.WithDecider(requestDeciderForTesting),
+					http_retry.WithResponseDiscarder(responseDiscarderForTesting),
 					http_retry.WithBackoff(http_retry.BackoffLinear(retryTimeout)),
 				),
 			},
