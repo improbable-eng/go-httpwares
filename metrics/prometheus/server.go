@@ -43,7 +43,7 @@ var (
 			Help:    "Size of received requests.",
 			Buckets: prometheus.ExponentialBuckets(32, 32, 6),
 		},
-		[]string{"name", "handler", "host", "path", "method", "status"},
+		[]string{"name", "handler", "host", "path", "method"},
 	)
 	serverResponseSize = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
