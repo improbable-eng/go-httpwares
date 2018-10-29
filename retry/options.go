@@ -71,9 +71,9 @@ func WithDecider(f RequestRetryDeciderFunc) Option {
 }
 
 // WithResponseDiscarder is a function that decides whether a given response should be discarded and another request attempted.
-func WithResponseDiscarder(f RequestRetryDeciderFunc) Option {
+func WithResponseDiscarder(f ResponseDiscarderFunc) Option {
 	return func(o *options) {
-		o.decider = f
+		o.discarder = f
 	}
 }
 
