@@ -21,12 +21,14 @@ var (
 //
 // All handlers will have a Logrus logger in their context, which can be fetched using `ctxlogrus.Extract`.
 func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
+	entry.Logger.Hooks.Add(&timeHook{})
 	return func(nextHandler http.Handler) http.Handler {
 		options := evaluateMiddlewareOpts(opts)
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			wrappedResp := httpwares.WrapResponseWriter(resp)
 
-			requestFields := appendFields(newServerRequestFields(req), options.requestFieldExtractor(req))
+			startTime := time.Now()
+			requestFields := appendFields(newServerRequestFields(req, startTime), options.requestFieldExtractor(req))
 			newEntry := entry.WithFields(requestFields)
 			newReq := req.WithContext(ctxlogrus.ToContext(req.Context(), newEntry))
 			var capture *responseCapture
@@ -36,7 +38,6 @@ func Middleware(entry *logrus.Entry, opts ...Option) httpwares.Middleware {
 				}
 			})
 
-			startTime := time.Now()
 			nextHandler.ServeHTTP(wrappedResp, newReq)
 			capture.finish() // captureResponse has a nil check, this can be nil
 
@@ -70,7 +71,7 @@ func responseFields(wrappedResp httpwares.WrappedResponseWriter, startTime time.
 	return postCallFields
 }
 
-func newServerRequestFields(req *http.Request) logrus.Fields {
+func newServerRequestFields(req *http.Request, startTime time.Time) logrus.Fields {
 	host := req.URL.Host
 	if host == "" {
 		host = req.Host
@@ -86,6 +87,7 @@ func newServerRequestFields(req *http.Request) logrus.Fields {
 		"http.request.user_agent":   req.Header.Get("User-Agent"),
 		"http.request.length_bytes": req.ContentLength,
 		"http.request.referer":      req.Referer(),
+		"http.start_time":           startTime,
 	}
 
 	if addr := req.RemoteAddr; addr != "" {
@@ -128,4 +130,18 @@ func timeDiffToMilliseconds(then time.Time) float32 {
 		return 0.0
 	}
 	return float32(sub/1000) / 1000.0
+}
+
+type timeHook struct{}
+
+func (*timeHook) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+
+func (*timeHook) Fire(entry *logrus.Entry) error {
+	if startTime, ok := entry.Data["http.start_time"]; ok {
+		entry.Data["http.time_ms"] = timeDiffToMilliseconds(startTime.(time.Time))
+	}
+
+	return nil
 }
