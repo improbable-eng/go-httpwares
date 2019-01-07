@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	httpTag = opentracing.Tag{string(ext.Component), "http"}
+	httpTag = opentracing.Tag{Key: string(ext.Component), Value: "http"}
 )
 
 // Middleware returns a http.Handler middleware values for request tags.
