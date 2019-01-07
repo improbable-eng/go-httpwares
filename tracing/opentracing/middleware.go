@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	httpTag = opentracing.Tag{string(ext.Component), "http"}
+	httpTag = opentracing.Tag{Key: string(ext.Component), Value: "http"}
 )
 
 // Middleware returns a http.Handler middleware values for request tags.
@@ -30,7 +30,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 			}
 			tags := http_ctxtags.ExtractInbound(req)
 			newReq, serverSpan := newServerSpanFromInbound(req, o.tracer)
-			hackyInjectOpentracingIdsToTags(serverSpan, tags)
+			injectOpentracingIdsToTags(serverSpan, tags)
 			newResp := httpwares.WrapResponseWriter(resp)
 			next.ServeHTTP(newResp, newReq)
 

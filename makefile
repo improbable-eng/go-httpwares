@@ -1,4 +1,4 @@
-SHELL="/bin/bash"
+SHELL=/bin/bash
 
 GOFILES_NOVENDOR = $(shell go list ./... | grep -v /vendor/)
 
