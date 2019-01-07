@@ -1,6 +1,3 @@
-// Copyright 2017 Michal Witkowski. All Rights Reserved.
-// See LICENSE for licensing terms.
-
 package http_opentracing_test
 
 import (
@@ -36,7 +33,8 @@ func (a *assertingHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request
 	assert.NotNil(a.T, opentracing.SpanFromContext(req.Context()), "handlers must have the spancontext in their context, otherwise propagation will fail")
 	tags := http_ctxtags.ExtractInbound(req)
 	assert.True(a.T, tags.Has("trace.traceid"), "handlers should see traceid in tags")
-	assert.True(a.T, tags.Has("trace.spanid"), "handlers should see traceid in tags")
+	assert.True(a.T, tags.Has("trace.spanid"), "handlers should see spanid in tags")
+	assert.True(a.T, tags.Has("trace.sampled"), "handlers should see sampled in tags")
 	httpwares_testing.PingBackHandler(httpwares_testing.DefaultPingBackStatusCode).ServeHTTP(resp, req)
 }
 

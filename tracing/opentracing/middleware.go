@@ -30,7 +30,7 @@ func Middleware(opts ...Option) httpwares.Middleware {
 			}
 			tags := http_ctxtags.ExtractInbound(req)
 			newReq, serverSpan := newServerSpanFromInbound(req, o.tracer)
-			hackyInjectOpentracingIdsToTags(serverSpan, tags)
+			injectOpentracingIdsToTags(serverSpan, tags)
 			newResp := httpwares.WrapResponseWriter(resp)
 			next.ServeHTTP(newResp, newReq)
 
