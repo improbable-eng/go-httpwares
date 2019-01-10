@@ -12,7 +12,7 @@ const (
 	TagTraceId           = "trace.traceid"
 	TagSpanId            = "trace.spanid"
 	TagSampled           = "trace.sampled"
-	JaegerNotSampledFlag = "0"
+	jaegerNotSampledFlag = "0"
 )
 
 // injectOpentracingIdsToTags writes the given context to the ctxtags.
@@ -35,15 +35,16 @@ type tagsCarrier struct {
 }
 
 func (t *tagsCarrier) Set(key, val string) {
-	if strings.Contains(strings.ToLower(key), "traceid") {
+	key = strings.ToLower(key)
+	if strings.Contains(key, "traceid") {
 		t.Tags.Set(TagTraceId, val) // this will most likely be base-16 (hex) encoded
 	}
 
-	if strings.Contains(strings.ToLower(key), "spanid") && !strings.Contains(strings.ToLower(key), "parent") {
+	if strings.Contains(key, "spanid") && !strings.Contains(strings.ToLower(key), "parent") {
 		t.Tags.Set(TagSpanId, val) // this will most likely be base-16 (hex) encoded
 	}
 
-	if strings.Contains(strings.ToLower(key), "sampled") {
+	if strings.Contains(key, "sampled") {
 		t.Tags.Set(TagSampled, val)
 	}
 
@@ -53,7 +54,7 @@ func (t *tagsCarrier) Set(key, val string) {
 			t.Tags.Set(TagTraceId, parts[0])
 			t.Tags.Set(TagSpanId, parts[1])
 
-			if parts[3] != JaegerNotSampledFlag {
+			if parts[3] != jaegerNotSampledFlag {
 				t.Tags.Set(TagSampled, "true")
 			} else {
 				t.Tags.Set(TagSampled, "false")
