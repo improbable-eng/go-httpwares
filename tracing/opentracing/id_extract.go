@@ -45,7 +45,10 @@ func (t *tagsCarrier) Set(key, val string) {
 	}
 
 	if strings.Contains(key, "sampled") {
-		t.Tags.Set(TagSampled, val)
+		switch val {
+		case "true", "false":
+			t.Tags.Set(TagSampled, val)
+		}
 	}
 
 	if key == "uber-trace-id" {
