@@ -10,3 +10,7 @@ import (
 func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	return r.GetBody
 }
+
+func RemoveGetBody(r *http.Request) {
+	r.GetBody = nil
+}

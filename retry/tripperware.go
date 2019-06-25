@@ -34,7 +34,8 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			}
 
 			getBodyFn := getBody(req)
-			if getBodyFn == nil && o.bodyBufferingAllowed && req.Body != nil {
+			if getBodyFn == nil && req.Body != nil {
+				// If the GetBody function does not exist, we can setup our own buffering for the body
 				data, err := ioutil.ReadAll(req.Body)
 				if err != nil {
 					return nil, fmt.Errorf("error reading request body")

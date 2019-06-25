@@ -29,3 +29,7 @@ func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	}
 	return nil
 }
+
+func RemoveGetBody(r *http.Request) {
+	// no-op
+}
