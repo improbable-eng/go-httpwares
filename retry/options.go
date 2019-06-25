@@ -10,18 +10,20 @@ import (
 
 var (
 	defaultOptions = &options{
-		decider:     DefaultRetriableDecider,
-		discarder:   DefaultResponseDiscarder,
-		maxRetry:    3,
-		backoffFunc: BackoffLinear(100 * time.Millisecond),
+		decider:              DefaultRetriableDecider,
+		discarder:            DefaultResponseDiscarder,
+		maxRetry:             3,
+		backoffFunc:          BackoffLinear(100 * time.Millisecond),
+		bodyBufferingAllowed: false,
 	}
 )
 
 type options struct {
-	decider     RequestRetryDeciderFunc
-	discarder   ResponseDiscarderFunc
-	maxRetry    uint
-	backoffFunc BackoffFunc
+	decider              RequestRetryDeciderFunc
+	discarder            ResponseDiscarderFunc
+	maxRetry             uint
+	backoffFunc          BackoffFunc
+	bodyBufferingAllowed bool
 }
 
 func evaluateOptions(opts []Option) *options {
@@ -74,6 +76,16 @@ func WithDecider(f RequestRetryDeciderFunc) Option {
 func WithResponseDiscarder(f ResponseDiscarderFunc) Option {
 	return func(o *options) {
 		o.discarder = f
+	}
+}
+
+// WithBodyBuffering allows the retry tripperware to setup buffering of the request body if the GetBody
+// property of the request is not present.
+// Without this, requests with no GetBody cannot be retried as the body cannot be read multiple times.
+// This should be used whenever wa want to retry requests with no GetBody method. For example, when used in a proxy.
+func WithBodyBuffering() Option {
+	return func(o *options) {
+		o.bodyBufferingAllowed = true
 	}
 }
 

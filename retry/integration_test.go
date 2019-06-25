@@ -187,3 +187,20 @@ func (s *RetryTripperwareSuite) TestCustomResponseDiscarder() {
 	require.EqualValues(s.T(), 5, s.f.requestCount(), "backend should see all the retry calls")
 	s.ClientTripperware = clientTripperware
 }
+
+func (s *RetryTripperwareSuite) TestBodyBuffering() {
+	s.f.resetFailingConfiguration(3, noSleep)
+	clientTripperware := s.ClientTripperware
+	s.ClientTripperware = []httpwares.Tripperware{
+		http_retry.Tripperware(
+			http_retry.WithBodyBuffering(),
+		),
+	}
+	req := s.createRequest("GET", s.SimpleCtx())
+	req.GetBody = nil
+	resp, err := s.NewClient().Do(req)
+	require.NoError(s.T(), err, "call shouldn't fail")
+	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should succeed")
+	require.EqualValues(s.T(), 3, s.f.requestCount(), "3 requests should be retried to meet the modulo")
+	s.ClientTripperware = clientTripperware
+}
