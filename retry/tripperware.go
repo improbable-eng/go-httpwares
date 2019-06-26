@@ -4,11 +4,8 @@
 package http_retry
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -29,27 +26,12 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			if !o.decider(req) && !isEnabled(req.Context()) {
 				return next.RoundTrip(req)
 			}
-			if o.maxRetry == 0 {
-				return next.RoundTrip(req)
-			}
-
 			getBodyFn := getBody(req)
-			if getBodyFn == nil && req.Body != nil {
-				// If the GetBody function does not exist, we can setup our own buffering for the body
-				data, err := ioutil.ReadAll(req.Body)
-				if err != nil {
-					return nil, fmt.Errorf("error reading request body")
-				}
-				req.Body = ioutil.NopCloser(bytes.NewBuffer(data))
-				getBodyFn = func() (io.ReadCloser, error) {
-					// Create a new buffer containing the body data each time
-					return ioutil.NopCloser(bytes.NewBuffer(data)), nil
-				}
-			} else if getBodyFn == nil {
-				// The lack of GetBody function doesn't allow for re-reads of the body data
+			if o.maxRetry == 0 || getBodyFn == nil {
+				// If we are configured to do no retries or the lack of GetBody function doesn't allow for re-reads of
+				// body data.
 				return next.RoundTrip(req)
 			}
-
 			var err error
 			var lastResp *http.Response
 			for attempt := uint(0); attempt < o.maxRetry; attempt++ {
