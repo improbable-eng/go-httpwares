@@ -25,8 +25,7 @@ var (
 	noSleep         = 0 * time.Second
 	retryTimeout    = 50 * time.Millisecond
 	failureCode     = http.StatusServiceUnavailable
-	testContent     = "SomeReallyLongString"
-	expectedContent = testContent
+	expectedContent = "SomeReallyLongString"
 )
 
 type failingHandler struct {
@@ -205,11 +204,12 @@ func (s *RetryTripperwareSuite) TestRequestBodyBuffering() {
 
 func (s *RetryTripperwareSuite) TestRequestBodyBufferingWithNoBody() {
 	s.f.resetFailingConfiguration(3, noSleep)
+	storedContent := expectedContent
 	expectedContent = ""
 	req := s.createRequest("GET", s.SimpleCtx(), "")
 	resp, err := s.NewClient().Do(req)
 	require.NoError(s.T(), err, "call shouldn't fail")
 	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should succeed")
 	require.EqualValues(s.T(), 3, s.f.requestCount(), "3 requests should be retried to meet the modulo")
-	expectedContent = testContent
+	expectedContent = storedContent
 }
