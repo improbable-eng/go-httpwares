@@ -4,6 +4,7 @@
 package http_retry_test
 
 import (
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -97,7 +98,10 @@ func (s *RetryTripperwareSuite) SetupTest() {
 }
 
 func (s *RetryTripperwareSuite) createRequest(method string, ctx context.Context) *http.Request {
-	content := strings.NewReader(expectedContent)
+	var content io.Reader
+	if expectedContent != "" {
+		content = strings.NewReader(expectedContent)
+	}
 	req, _ := http.NewRequest(method, "https://something.local/someurl", content)
 	req = req.WithContext(ctx)
 	return req
@@ -186,4 +190,26 @@ func (s *RetryTripperwareSuite) TestCustomResponseDiscarder() {
 	assert.Equal(s.T(), failureCode, resp.StatusCode, "failure code should be propagated")
 	require.EqualValues(s.T(), 5, s.f.requestCount(), "backend should see all the retry calls")
 	s.ClientTripperware = clientTripperware
+}
+
+func (s *RetryTripperwareSuite) TestRequestBodyBuffering() {
+	s.f.resetFailingConfiguration(3, noSleep)
+	req := s.createRequest("GET", s.SimpleCtx())
+	removeGetBody(req)
+	resp, err := s.NewClient().Do(req)
+	require.NoError(s.T(), err, "call shouldn't fail")
+	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should succeed")
+	require.EqualValues(s.T(), 3, s.f.requestCount(), "3 requests should be retried to meet the modulo")
+}
+
+func (s *RetryTripperwareSuite) TestRequestBodyBufferingWithNoBody() {
+	s.f.resetFailingConfiguration(3, noSleep)
+	storedContent := expectedContent
+	expectedContent = ""
+	req := s.createRequest("GET", s.SimpleCtx())
+	resp, err := s.NewClient().Do(req)
+	require.NoError(s.T(), err, "call shouldn't fail")
+	require.Equal(s.T(), httpwares_testing.DefaultPingBackStatusCode, resp.StatusCode, "response should succeed")
+	require.EqualValues(s.T(), 3, s.f.requestCount(), "3 requests should be retried to meet the modulo")
+	expectedContent = storedContent
 }

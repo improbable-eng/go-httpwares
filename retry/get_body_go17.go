@@ -26,6 +26,10 @@ func getBody(r *http.Request) func() (io.ReadCloser, error) {
 			b := bytes.NewBuffer(body)
 			return ioutil.NopCloser(b), nil
 		}
+	} else {
+		// No buffering required as there is no body
+		return func() (io.ReadCloser, error) {
+			return nil, nil
+		}
 	}
-	return nil
 }

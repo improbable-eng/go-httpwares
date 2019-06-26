@@ -26,7 +26,8 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			if !o.decider(req) && !isEnabled(req.Context()) {
 				return next.RoundTrip(req)
 			}
-			if o.maxRetry == 0 || getBody(req) == nil {
+			getBodyFn := getBody(req)
+			if o.maxRetry == 0 || getBodyFn == nil {
 				// If we are configured to do no retries or the lack of GetBody function doesn't allow for re-reads of
 				// body data.
 				return next.RoundTrip(req)
@@ -35,7 +36,7 @@ func Tripperware(opts ...Option) httpwares.Tripperware {
 			var lastResp *http.Response
 			for attempt := uint(0); attempt < o.maxRetry; attempt++ {
 				thisReq := req.WithContext(req.Context()) // make a copy.
-				thisReq.Body, err = getBody(req)()
+				thisReq.Body, err = getBodyFn()
 				if err != nil {
 					return nil, fmt.Errorf("failed reading body for retry: %v", err)
 				}
