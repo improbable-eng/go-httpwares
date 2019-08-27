@@ -69,7 +69,7 @@ func waitRetryBackoff(attempt uint, parentCtx context.Context, opt *options) err
 		select {
 		case <-parentCtx.Done():
 			return parentCtx.Err()
-		case <-time.Tick(waitTime):
+		case <-time.After(waitTime):
 		}
 	}
 	return nil
