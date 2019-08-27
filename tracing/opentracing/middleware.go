@@ -89,5 +89,4 @@ func logServerErr(req *http.Request, fmt string, args ...interface{}) {
 	} else {
 		log.Printf(fmt, args...)
 	}
-
 }
