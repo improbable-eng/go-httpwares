@@ -84,13 +84,9 @@ func operationNameFromReqHandler(req *http.Request) string {
 }
 
 func logServerErr(req *http.Request, fmt string, args ...interface{}) {
-	if v, ok := req.Context().Value(http.ServerContextKey).(*http.Server); ok {
-		if logger := v.ErrorLog; logger != nil {
-			logger.Printf(fmt, args)
-		} else {
-			log.Printf(fmt, args)
-		}
+	if v, ok := req.Context().Value(http.ServerContextKey).(*http.Server); ok && v.ErrorLog != nil {
+		v.ErrorLog.Printf(fmt, args...)
 	} else {
-		log.Printf(fmt, args)
+		log.Printf(fmt, args...)
 	}
 }
