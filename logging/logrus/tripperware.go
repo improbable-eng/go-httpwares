@@ -17,7 +17,7 @@ func Tripperware(entry *logrus.Entry, opts ...Option) httpwares.Tripperware {
 		o := evaluateTripperwareOpts(opts)
 		return httpwares.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			startTime := time.Now()
-			fields := newClientRequestFields(req)
+			fields := newClientRequestFields(req, o.requestFieldExtractor)
 			resp, err := next.RoundTrip(req)
 			if err != nil {
 				logError(o.levelForConnectivityError, entry.WithFields(fields), err)
@@ -37,7 +37,7 @@ func logError(level logrus.Level, e *logrus.Entry, err error) {
 	levelLogf(e.WithError(err), level, "request failed to execute, see err")
 }
 
-func newClientRequestFields(req *http.Request) logrus.Fields {
+func newClientRequestFields(req *http.Request, extract func(req *http.Request) map[string]interface{}) logrus.Fields {
 	fields := logrus.Fields{
 		"system":                    SystemField,
 		"span.kind":                 "client",
@@ -46,6 +46,10 @@ func newClientRequestFields(req *http.Request) logrus.Fields {
 	}
 
 	for k, v := range defaultRequestFields(req) {
+		fields[k] = v
+	}
+
+	for k, v := range extract(req) {
 		fields[k] = v
 	}
 
