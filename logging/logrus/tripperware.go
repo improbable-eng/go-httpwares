@@ -49,8 +49,10 @@ func newClientRequestFields(req *http.Request, extract func(req *http.Request) m
 		fields[k] = v
 	}
 
-	for k, v := range extract(req) {
-		fields[k] = v
+	if extract != nil {
+		for k, v := range extract(req) {
+			fields[k] = v
+		}
 	}
 
 	return fields
