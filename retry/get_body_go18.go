@@ -13,6 +13,13 @@ func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	if r.GetBody != nil {
 		return r.GetBody
 	} else if r.Body != nil {
+		// Optimise for io.ReadSeeker (e.g file readers) for uploading large files.
+		if rs, ok := r.Body.(io.ReadSeeker); ok {
+			return func() (closer io.ReadCloser, err error) {
+				rs.Seek(0, io.SeekStart)
+				return ioutil.NopCloser(rs), nil
+			}
+		}
 		// If the GetBody function does not exist, setup our own buffering for the body to allow re-reads
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {

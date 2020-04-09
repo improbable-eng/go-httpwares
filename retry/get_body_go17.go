@@ -11,6 +11,13 @@ import (
 
 func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	if r.Body != nil {
+		// Optimise for io.ReadSeeker (e.g file readers) for uploading large files.
+		if rs, ok := r.Body.(io.ReadSeeker); ok {
+			return func() (closer io.ReadCloser, err error) {
+				rs.Seek(0, io.SeekStart)
+				return ioutil.NopCloser(rs), nil
+			}
+		}
 		body, err := ioutil.ReadAll(r.Body)
 		defer r.Body.Close()
 		if err != nil {
