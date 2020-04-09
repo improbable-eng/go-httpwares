@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// Wrap the Body of the Request so it can be read repeatedly in case of retrying
 func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	if r.Body != nil {
 		// Optimise for io.ReadSeeker (e.g file readers) for uploading large files.
