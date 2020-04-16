@@ -16,8 +16,14 @@ func getBody(r *http.Request) func() (io.ReadCloser, error) {
 	} else if r.Body != nil {
 		// Optimise for io.ReadSeeker (e.g file readers) for uploading large files.
 		if rs, ok := r.Body.(io.ReadSeeker); ok {
+			currentPosition, err := rs.Seek(0, io.SeekCurrent)
+			if err != nil {
+				return func() (io.ReadCloser, error) {
+					return nil, err
+				}
+			}
 			return func() (closer io.ReadCloser, err error) {
-				rs.Seek(0, io.SeekStart)
+				rs.Seek(currentPosition, io.SeekStart)
 				return ioutil.NopCloser(rs), nil
 			}
 		}
