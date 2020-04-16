@@ -16,7 +16,9 @@ func getBody(r *http.Request) func() (io.ReadCloser, error) {
 		if rs, ok := r.Body.(io.ReadSeeker); ok {
 			currentPosition, err := rs.Seek(0, io.SeekCurrent)
 			if err != nil {
-				return nil
+				return func() (io.ReadCloser, error) {
+					return nil, err
+				}
 			}
 			return func() (closer io.ReadCloser, err error) {
 				rs.Seek(currentPosition, io.SeekStart)
