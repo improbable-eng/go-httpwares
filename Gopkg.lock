@@ -220,26 +220,49 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b0e18e7811d3df0e3e36aaf8d48bf5d4486b60f42ce5cbe4db9e8fff2174c8e3"
+  digest = "1:bae56301eb91e4d8ba44a6e4ec044c5855b2c6f5f39fbd0eb28f6b6c646227b0"
   name = "golang.org/x/tools"
   packages = [
     "container/intsets",
     "go/ast/astutil",
     "go/buildutil",
     "go/callgraph",
+    "go/gcexportdata",
+    "go/internal/cgo",
+    "go/internal/gcimporter",
+    "go/internal/packagesdriver",
     "go/loader",
+    "go/packages",
     "go/pointer",
     "go/ssa",
     "go/ssa/ssautil",
     "go/types/typeutil",
     "godoc",
     "godoc/analysis",
+    "godoc/golangorgenv",
     "godoc/util",
     "godoc/vfs",
     "godoc/vfs/httpfs",
+    "internal/event",
+    "internal/event/core",
+    "internal/event/keys",
+    "internal/event/label",
+    "internal/gocommand",
+    "internal/packagesinternal",
   ]
   pruneopts = ""
-  revision = "64890f4e2b733655fee5077a5435a8812404c3a3"
+  revision = "8b020aee10d2dc97e13b76ce01b59c9b5d4a4d0f"
+
+[[projects]]
+  branch = "master"
+  digest = "1:9d4ac09a835404ae9306c6e1493cf800ecbb0f3f828f4333b3e055de4c962eea"
+  name = "golang.org/x/xerrors"
+  packages = [
+    ".",
+    "internal",
+  ]
+  pruneopts = ""
+  revision = "9bdfabe68543c54f90421aeb9a60ef8061b5b544"
 
 [[projects]]
   branch = "master"
